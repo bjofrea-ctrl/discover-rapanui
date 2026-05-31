@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Carruseles — Discover Rapa Nui</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d0d;
+    color: #eee;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 40px 24px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 2.4rem; color: #d4a853; text-align: center; }
+  .sub { text-align: center; color: #666; font-size: 0.75rem; margin-bottom: 8px; letter-spacing: 1px; }
+  .sub a { color: #d4a853; text-decoration: none; border-bottom: 1px solid #d4a85333; }
+  .sub a:hover { border-color: #d4a853; }
+
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 32px 0 40px; }
+  .stat { background: #141414; border: 1px solid #222; padding: 20px 12px; text-align: center; }
+  .stat .num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #d4a853; }
+  .stat .lbl { font-size: 0.6rem; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+  .nav { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center; }
+  .nav a { color: #888; text-decoration: none; font-size: 0.7rem; padding: 6px 14px; border: 1px solid #222; transition: 0.3s; letter-spacing: 0.5px; }
+  .nav a:hover { color: #d4a853; border-color: #d4a853; }
+
+  .carousel-section { margin-bottom: 64px; border-top: 1px solid #1a1a1a; padding-top: 32px; }
+  .carousel-header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .carousel-emoji { font-size: 1.4rem; }
+  .carousel-header h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #fff; }
+  .carousel-badge { background: #d4a853; color: #0d0d0d; padding: 2px 12px; font-size: 0.6rem; font-weight: 600; letter-spacing: 1px; }
+  .carousel-meta { color: #555; font-size: 0.7rem; margin-bottom: 20px; }
+  .carousel-meta span { margin-right: 20px; }
+
+  .slides-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  .slide-card { width: 250px; background: #141414; border: 1px solid #222; border-radius: 6px; overflow: hidden; transition: 0.2s; }
+  .slide-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.5); border-color: #d4a85344; }
+  .slide-card .frame { width: 100%; aspect-ratio: 1080/1350; background: #1a1a1a; overflow: hidden; }
+  .slide-card .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .slide-card .info { padding: 8px 10px; display: flex; justify-content: space-between; font-size: 0.65rem; color: #555; }
+  .slide-card .slide-num { font-weight: 600; color: #d4a853; }
+
+  .mock-feed { display: none; }
+
+  @media (max-width: 640px) {
+    .slide-card { width: 100%; max-width: 320px; }
+    .stats { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Discover Rapa Nui</h1>
+<p class="sub">Carruseles para Instagram · Mayo 2026<br>
+<a href="#" onclick="document.querySelector('.mock-feed').style.display=document.querySelector('.mock-feed').style.display==='none'?'block':'none';return false">📱 Vista Instagram Feed</a></p>
+
+<div class="stats">
+  <div class="stat"><div class="num">4</div><div class="lbl">Carruseles</div></div>
+  <div class="stat"><div class="num">37</div><div class="lbl">Slides</div></div>
+  <div class="stat"><div class="num">~9</div><div class="lbl">Semanas contenido</div></div>
+  <div class="stat"><div class="num">4</div><div class="lbl">Templates</div></div>
+</div>
+
+<div class="nav">
+    <a href="#carousel-0">🏝️ Destino Inspiracional (9)</a>
+    <a href="#carousel-1">📋 Planes Servicios (10)</a>
+    <a href="#carousel-2">💡 Tips Boda (10)</a>
+    <a href="#carousel-3">💬 Testimonios (8)</a>
+</div>
+
+<div id="carousels">
+
+  <div class="carousel-section" id="carousel-0">
+    <div class="carousel-header">
+      <span class="carousel-emoji">🏝️</span>
+      <h2>Destino Inspiracional</h2>
+      <span class="carousel-badge">Inspiracional</span>
+    </div>
+    <div class="carousel-meta">
+      <span>📅 2026-05-30</span>
+      <span>📄 9 slides</span>
+    </div>
+    <div class="slides-grid">
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_01.jpg" alt="Slide 01"></div>
+        <div class="info">
+          <span class="slide-num">1/9</span>
+          <span class="slide-size">328 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_02.jpg" alt="Slide 02"></div>
+        <div class="info">
+          <span class="slide-num">2/9</span>
+          <span class="slide-size">251 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_03.jpg" alt="Slide 03"></div>
+        <div class="info">
+          <span class="slide-num">3/9</span>
+          <span class="slide-size">414 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_04.jpg" alt="Slide 04"></div>
+        <div class="info">
+          <span class="slide-num">4/9</span>
+          <span class="slide-size">232 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_05.jpg" alt="Slide 05"></div>
+        <div class="info">
+          <span class="slide-num">5/9</span>
+          <span class="slide-size">210 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_06.jpg" alt="Slide 06"></div>
+        <div class="info">
+          <span class="slide-num">6/9</span>
+          <span class="slide-size">321 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_07.jpg" alt="Slide 07"></div>
+        <div class="info">
+          <span class="slide-num">7/9</span>
+          <span class="slide-size">252 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_08.jpg" alt="Slide 08"></div>
+        <div class="info">
+          <span class="slide-num">8/9</span>
+          <span class="slide-size">241 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203033_destino_inspiracional/slide_09.jpg" alt="Slide 09"></div>
+        <div class="info">
+          <span class="slide-num">9/9</span>
+          <span class="slide-size">160 KB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="carousel-section" id="carousel-1">
+    <div class="carousel-header">
+      <span class="carousel-emoji">📋</span>
+      <h2>Planes Servicios</h2>
+      <span class="carousel-badge">Servicios</span>
+    </div>
+    <div class="carousel-meta">
+      <span>📅 2026-05-30</span>
+      <span>📄 10 slides</span>
+    </div>
+    <div class="slides-grid">
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_01.jpg" alt="Slide 01"></div>
+        <div class="info">
+          <span class="slide-num">1/10</span>
+          <span class="slide-size">417 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_02.jpg" alt="Slide 02"></div>
+        <div class="info">
+          <span class="slide-num">2/10</span>
+          <span class="slide-size">144 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_03.jpg" alt="Slide 03"></div>
+        <div class="info">
+          <span class="slide-num">3/10</span>
+          <span class="slide-size">245 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_04.jpg" alt="Slide 04"></div>
+        <div class="info">
+          <span class="slide-num">4/10</span>
+          <span class="slide-size">151 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_05.jpg" alt="Slide 05"></div>
+        <div class="info">
+          <span class="slide-num">5/10</span>
+          <span class="slide-size">343 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_06.jpg" alt="Slide 06"></div>
+        <div class="info">
+          <span class="slide-num">6/10</span>
+          <span class="slide-size">163 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_07.jpg" alt="Slide 07"></div>
+        <div class="info">
+          <span class="slide-num">7/10</span>
+          <span class="slide-size">119 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_08.jpg" alt="Slide 08"></div>
+        <div class="info">
+          <span class="slide-num">8/10</span>
+          <span class="slide-size">322 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_09.jpg" alt="Slide 09"></div>
+        <div class="info">
+          <span class="slide-num">9/10</span>
+          <span class="slide-size">141 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_planes_servicios/slide_10.jpg" alt="Slide 10"></div>
+        <div class="info">
+          <span class="slide-num">10/10</span>
+          <span class="slide-size">160 KB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="carousel-section" id="carousel-2">
+    <div class="carousel-header">
+      <span class="carousel-emoji">💡</span>
+      <h2>Tips Boda</h2>
+      <span class="carousel-badge">Educativo</span>
+    </div>
+    <div class="carousel-meta">
+      <span>📅 2026-05-30</span>
+      <span>📄 10 slides</span>
+    </div>
+    <div class="slides-grid">
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_01.jpg" alt="Slide 01"></div>
+        <div class="info">
+          <span class="slide-num">1/10</span>
+          <span class="slide-size">219 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_02.jpg" alt="Slide 02"></div>
+        <div class="info">
+          <span class="slide-num">2/10</span>
+          <span class="slide-size">133 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_03.jpg" alt="Slide 03"></div>
+        <div class="info">
+          <span class="slide-num">3/10</span>
+          <span class="slide-size">142 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_04.jpg" alt="Slide 04"></div>
+        <div class="info">
+          <span class="slide-num">4/10</span>
+          <span class="slide-size">133 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_05.jpg" alt="Slide 05"></div>
+        <div class="info">
+          <span class="slide-num">5/10</span>
+          <span class="slide-size">136 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_06.jpg" alt="Slide 06"></div>
+        <div class="info">
+          <span class="slide-num">6/10</span>
+          <span class="slide-size">140 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_07.jpg" alt="Slide 07"></div>
+        <div class="info">
+          <span class="slide-num">7/10</span>
+          <span class="slide-size">135 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_08.jpg" alt="Slide 08"></div>
+        <div class="info">
+          <span class="slide-num">8/10</span>
+          <span class="slide-size">133 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_09.jpg" alt="Slide 09"></div>
+        <div class="info">
+          <span class="slide-num">9/10</span>
+          <span class="slide-size">141 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203035_tips_boda/slide_10.jpg" alt="Slide 10"></div>
+        <div class="info">
+          <span class="slide-num">10/10</span>
+          <span class="slide-size">154 KB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="carousel-section" id="carousel-3">
+    <div class="carousel-header">
+      <span class="carousel-emoji">💬</span>
+      <h2>Testimonios</h2>
+      <span class="carousel-badge">Social Proof</span>
+    </div>
+    <div class="carousel-meta">
+      <span>📅 2026-05-30</span>
+      <span>📄 8 slides</span>
+    </div>
+    <div class="slides-grid">
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_01.jpg" alt="Slide 01"></div>
+        <div class="info">
+          <span class="slide-num">1/8</span>
+          <span class="slide-size">250 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_02.jpg" alt="Slide 02"></div>
+        <div class="info">
+          <span class="slide-num">2/8</span>
+          <span class="slide-size">143 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_03.jpg" alt="Slide 03"></div>
+        <div class="info">
+          <span class="slide-num">3/8</span>
+          <span class="slide-size">337 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_04.jpg" alt="Slide 04"></div>
+        <div class="info">
+          <span class="slide-num">4/8</span>
+          <span class="slide-size">251 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_05.jpg" alt="Slide 05"></div>
+        <div class="info">
+          <span class="slide-num">5/8</span>
+          <span class="slide-size">266 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_06.jpg" alt="Slide 06"></div>
+        <div class="info">
+          <span class="slide-num">6/8</span>
+          <span class="slide-size">266 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_07.jpg" alt="Slide 07"></div>
+        <div class="info">
+          <span class="slide-num">7/8</span>
+          <span class="slide-size">142 KB</span>
+        </div>
+      </div>
+      <div class="slide-card">
+        <div class="frame"><img loading="lazy" src="output/20260530_203037_testimonios/slide_08.jpg" alt="Slide 08"></div>
+        <div class="info">
+          <span class="slide-num">8/8</span>
+          <span class="slide-size">157 KB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
