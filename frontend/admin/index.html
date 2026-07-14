@@ -103,10 +103,114 @@
       <div id="eventsTableContainer">Cargando...</div>
     </div>
 
+    <!-- Contabilidad de la empresa -->
+    <div class="admin-section">
+      <h2>Contabilidad</h2>
+      <p class="sub">Flujo de caja y Estado de Resultados de la empresa. Información interna — nunca visible para clientes.</p>
+
+      <div class="admin-row-editor">
+        <h3>Importar movimientos desde Excel</h3>
+        <p class="admin-note">Columnas esperadas (en este orden): fecha, tipo (ingreso/egreso), categoría, descripción, monto. Ver <code>backend/SETUP.md</code>.</p>
+        <input type="file" id="excelFileInput" accept=".xlsx,.xls">
+        <div id="excelPreviewContainer"></div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Agregar movimiento manual</h3>
+        <form id="addTransactionForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="date" name="transaction_date" required>
+            <select name="type" required>
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+            <input type="text" name="category" placeholder="Categoría (ej: venta_evento, arriendo)" required>
+          </div>
+          <div class="admin-inline-fields">
+            <input type="text" name="description" placeholder="Descripción">
+            <input type="number" name="amount" placeholder="Monto" min="0" step="1" required>
+            <select name="currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar movimiento</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Flujo de Caja (por mes)</h3>
+        <div id="cashFlowContainer">Cargando...</div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Estado de Resultados (EERR)</h3>
+        <div class="admin-inline-fields" style="max-width: 400px;">
+          <input type="month" id="eerrFrom">
+          <input type="month" id="eerrTo">
+        </div>
+        <div id="eerrContainer">Selecciona un rango de meses.</div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Movimientos registrados</h3>
+        <div id="transactionsTableContainer">Cargando...</div>
+      </div>
+    </div>
+
     <!-- Editor de evento seleccionado -->
     <div class="admin-section admin-hidden" id="eventEditorSection">
       <h2>Editar evento: <span id="eventEditorTitle"></span></h2>
-      <p class="sub">Cronograma, checklist y proveedores asignados a este evento.</p>
+      <p class="sub">Presupuesto, cronograma, checklist, servicios y proveedores asignados a este evento.</p>
+
+      <div class="admin-row-editor">
+        <h3>Presupuesto</h3>
+        <form id="budgetForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="number" name="budget_amount" placeholder="Monto presupuestado" min="0" step="1">
+            <select name="budget_currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">Guardar presupuesto</button>
+          <p id="budgetSummary" class="admin-note"></p>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Actividades y Servicios Incluidos</h3>
+        <div id="servicesEditorContainer"></div>
+        <form id="addServiceForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="service_type" required>
+              <option value="ceremonia_ancestral">Ceremonia Ancestral</option>
+              <option value="ceremonia_civil">Ceremonia Civil</option>
+              <option value="arriendo_casa">Arriendo de Casa</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="cena">Cena</option>
+              <option value="coctel">Cóctel</option>
+              <option value="tour">Tour</option>
+              <option value="fotografia">Fotografía</option>
+              <option value="musica">Música</option>
+              <option value="flores">Flores</option>
+              <option value="transporte">Transporte</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="description" placeholder="Descripción">
+            <input type="date" name="scheduled_date">
+          </div>
+          <div class="admin-inline-fields">
+            <input type="number" name="quantity" placeholder="Cantidad" min="1" value="1">
+            <input type="number" name="cost" placeholder="Costo" min="0" step="1">
+            <select name="currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar servicio</button>
+        </form>
+      </div>
 
       <div class="admin-row-editor">
         <h3>Cronograma</h3>

@@ -24,6 +24,28 @@ const LEAD_STATUSES = ['nuevo', 'contactado', 'cotizado', 'ganado', 'perdido'];
 const EVENT_STATUSES = ['cotizado', 'contratado', 'planificacion', 'completado', 'cancelado'];
 const MILESTONE_STATUSES = ['pendiente', 'en_progreso', 'completado'];
 
+const SERVICE_TYPE_LABELS = {
+  ceremonia_ancestral: 'Ceremonia Ancestral',
+  ceremonia_civil: 'Ceremonia Civil',
+  arriendo_casa: 'Arriendo de Casa',
+  restaurant: 'Restaurant',
+  cena: 'Cena',
+  coctel: 'Cóctel',
+  tour: 'Tour',
+  fotografia: 'Fotografía',
+  musica: 'Música',
+  flores: 'Flores',
+  transporte: 'Transporte',
+  otro: 'Otro',
+};
+
+const MONTH_NAMES_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function formatMoney(amount, currency) {
+  const n = Number(amount || 0);
+  return `${n.toLocaleString('es-CL')} ${currency || 'CLP'}`;
+}
+
 let currentEventId = null;
 
 function escapeHtml(str) {
@@ -88,7 +110,7 @@ async function handleSession(session) {
   }
 
   showScreen(dashboard);
-  await Promise.all([loadLeads(), loadEvents()]);
+  await Promise.all([loadLeads(), loadEvents(), loadCashFlow(), loadTransactionsTable()]);
 }
 
 supabase.auth.onAuthStateChange((_event, session) => handleSession(session));
@@ -212,7 +234,7 @@ async function loadEvents() {
   const container = document.getElementById('eventsTableContainer');
   const { data: events, error } = await supabase
     .from('events')
-    .select('id, event_type, ceremony_type, event_date, status, coordinator_name, clients(email, partner1_name, partner2_name)')
+    .select('id, event_type, ceremony_type, event_date, status, coordinator_name, budget_amount, budget_currency, clients(email, partner1_name, partner2_name)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -267,14 +289,32 @@ function openEventEditor(ev) {
   document.getElementById('eventEditorTitle').textContent =
     [ev.clients?.partner1_name, ev.clients?.partner2_name].filter(Boolean).join(' & ') || ev.clients?.email || ev.id;
   document.getElementById('eventEditorSection').scrollIntoView({ behavior: 'smooth' });
+
+  const budgetForm = document.getElementById('budgetForm');
+  budgetForm.budget_amount.value = ev.budget_amount ?? '';
+  budgetForm.budget_currency.value = ev.budget_currency || 'CLP';
+
   loadMilestones();
   loadChecklist();
   loadVendors();
+  loadServices();
 }
 
 document.getElementById('closeEventEditorBtn').addEventListener('click', () => {
   currentEventId = null;
   document.getElementById('eventEditorSection').classList.add('admin-hidden');
+});
+
+document.getElementById('budgetForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const { error } = await supabase.from('events').update({
+    budget_amount: form.budget_amount.value ? Number(form.budget_amount.value) : null,
+    budget_currency: form.budget_currency.value,
+  }).eq('id', currentEventId);
+  if (error) { alert('No se pudo guardar el presupuesto.'); return; }
+  await loadServices();
+  await loadEvents();
 });
 
 async function loadMilestones() {
@@ -434,3 +474,360 @@ document.getElementById('addVendorForm').addEventListener('submit', async (e) =>
   form.reset();
   loadVendors();
 });
+
+// ============================================================
+// SERVICIOS / ACTIVIDADES INCLUIDAS EN EL EVENTO
+// ============================================================
+async function loadServices() {
+  const container = document.getElementById('servicesEditorContainer');
+  const { data, error } = await supabase
+    .from('event_services')
+    .select('*')
+    .eq('event_id', currentEventId)
+    .order('scheduled_date', { ascending: true, nullsFirst: false });
+
+  if (error) { container.textContent = 'Error cargando servicios.'; return; }
+
+  let total = 0;
+  if (!data.length) {
+    container.innerHTML = '<p class="admin-note">Sin actividades/servicios agregados todavía.</p>';
+  } else {
+    container.innerHTML = data.map((s) => {
+      const lineTotal = (Number(s.cost) || 0) * (s.quantity || 1);
+      total += lineTotal;
+      return `
+        <div class="admin-inline-fields" data-service-id="${s.id}" style="align-items:center;">
+          <span class="admin-badge">${escapeHtml(SERVICE_TYPE_LABELS[s.service_type] || s.service_type)}</span>
+          <span>${escapeHtml(s.description || '')}</span>
+          <span>${s.scheduled_date || ''}</span>
+          <span>${s.quantity}× ${formatMoney(s.cost, s.currency)}</span>
+          <span class="admin-badge">${escapeHtml(s.status)}</span>
+          <button class="admin-btn delete-service-btn">Eliminar</button>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.delete-service-btn').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        if (!confirm('¿Eliminar este servicio?')) return;
+        const id = e.target.closest('[data-service-id]').dataset.serviceId;
+        await supabase.from('event_services').delete().eq('id', id);
+        loadServices();
+      });
+    });
+  }
+
+  renderBudgetSummary(total);
+}
+
+function renderBudgetSummary(servicesTotal) {
+  const summary = document.getElementById('budgetSummary');
+  const form = document.getElementById('budgetForm');
+  const budget = Number(form.budget_amount.value || 0);
+  const currency = form.budget_currency.value;
+  if (!budget) {
+    summary.textContent = `Costo estimado de servicios: ${formatMoney(servicesTotal, currency)} (sin presupuesto definido).`;
+    return;
+  }
+  const pct = Math.round((servicesTotal / budget) * 100);
+  summary.textContent = `Presupuesto: ${formatMoney(budget, currency)} — Servicios: ${formatMoney(servicesTotal, currency)} (${pct}% del presupuesto).`;
+}
+
+document.getElementById('addServiceForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const payload = Object.fromEntries(new FormData(form).entries());
+  await supabase.from('event_services').insert({
+    event_id: currentEventId,
+    service_type: payload.service_type,
+    description: payload.description || null,
+    scheduled_date: payload.scheduled_date || null,
+    quantity: payload.quantity ? Number(payload.quantity) : 1,
+    cost: payload.cost ? Number(payload.cost) : null,
+    currency: payload.currency || 'CLP',
+  });
+  form.reset();
+  loadServices();
+});
+
+// ============================================================
+// CONTABILIDAD DE LA EMPRESA (admin-only)
+// ============================================================
+async function loadTransactionsTable() {
+  const container = document.getElementById('transactionsTableContainer');
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .select('*')
+    .order('transaction_date', { ascending: false })
+    .limit(200);
+
+  if (error) { container.textContent = 'Error cargando movimientos.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin movimientos registrados todavía.</p>'; return; }
+
+  container.innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Origen</th><th></th></tr></thead>
+      <tbody>${data.map((t) => `
+        <tr data-tx-id="${t.id}">
+          <td>${t.transaction_date}</td>
+          <td><span class="admin-badge">${t.type}</span></td>
+          <td>${escapeHtml(t.category)}</td>
+          <td>${escapeHtml(t.description || '')}</td>
+          <td>${formatMoney(t.amount, t.currency)}</td>
+          <td>${t.source === 'excel_import' ? 'Excel' : 'Manual'}</td>
+          <td><button class="admin-btn delete-tx-btn">Eliminar</button></td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  `;
+
+  container.querySelectorAll('.delete-tx-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      if (!confirm('¿Eliminar este movimiento?')) return;
+      const id = e.target.closest('tr').dataset.txId;
+      await supabase.from('finance_transactions').delete().eq('id', id);
+      await Promise.all([loadTransactionsTable(), loadCashFlow()]);
+    });
+  });
+}
+
+document.getElementById('addTransactionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const payload = Object.fromEntries(new FormData(form).entries());
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const { error } = await supabase.from('finance_transactions').insert({
+    transaction_date: payload.transaction_date,
+    type: payload.type,
+    category: payload.category,
+    description: payload.description || null,
+    amount: Number(payload.amount),
+    currency: payload.currency || 'CLP',
+    source: 'manual',
+    created_by: session.user.id,
+  });
+  if (error) { alert('No se pudo agregar el movimiento.'); return; }
+  form.reset();
+  await Promise.all([loadTransactionsTable(), loadCashFlow()]);
+});
+
+async function loadCashFlow() {
+  const container = document.getElementById('cashFlowContainer');
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .select('transaction_date, type, amount')
+    .order('transaction_date', { ascending: true });
+
+  if (error) { container.textContent = 'Error cargando flujo de caja.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin movimientos todavía.</p>'; return; }
+
+  const byMonth = new Map();
+  data.forEach((t) => {
+    const key = t.transaction_date.slice(0, 7); // YYYY-MM
+    if (!byMonth.has(key)) byMonth.set(key, { ingresos: 0, egresos: 0 });
+    const bucket = byMonth.get(key);
+    if (t.type === 'ingreso') bucket.ingresos += Number(t.amount);
+    else bucket.egresos += Number(t.amount);
+  });
+
+  let acumulado = 0;
+  const rows = [...byMonth.keys()].sort().map((key) => {
+    const { ingresos, egresos } = byMonth.get(key);
+    const saldoMes = ingresos - egresos;
+    acumulado += saldoMes;
+    const [year, month] = key.split('-');
+    const label = `${MONTH_NAMES_ES[Number(month) - 1]} ${year}`;
+    return { label, ingresos, egresos, saldoMes, acumulado };
+  });
+
+  container.innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Mes</th><th>Ingresos</th><th>Egresos</th><th>Saldo del mes</th><th>Saldo acumulado</th></tr></thead>
+      <tbody>${rows.map((r) => `
+        <tr>
+          <td>${r.label}</td>
+          <td>${formatMoney(r.ingresos, 'CLP')}</td>
+          <td>${formatMoney(r.egresos, 'CLP')}</td>
+          <td>${formatMoney(r.saldoMes, 'CLP')}</td>
+          <td>${formatMoney(r.acumulado, 'CLP')}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  `;
+}
+
+async function loadEerr() {
+  const container = document.getElementById('eerrContainer');
+  const fromVal = document.getElementById('eerrFrom').value; // 'YYYY-MM'
+  const toVal = document.getElementById('eerrTo').value;
+  if (!fromVal || !toVal) { container.innerHTML = 'Selecciona un rango de meses.'; return; }
+
+  const fromDate = `${fromVal}-01`;
+  const [toYear, toMonth] = toVal.split('-').map(Number);
+  const toDate = new Date(toYear, toMonth, 0).toISOString().slice(0, 10); // último día del mes "hasta"
+
+  const { data, error } = await supabase
+    .from('finance_transactions')
+    .select('type, category, amount')
+    .gte('transaction_date', fromDate)
+    .lte('transaction_date', toDate);
+
+  if (error) { container.textContent = 'Error cargando EERR.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin movimientos en ese rango.</p>'; return; }
+
+  const byCategory = new Map();
+  let totalIngresos = 0;
+  let totalEgresos = 0;
+  data.forEach((t) => {
+    if (!byCategory.has(t.category)) byCategory.set(t.category, { ingresos: 0, egresos: 0 });
+    const bucket = byCategory.get(t.category);
+    if (t.type === 'ingreso') { bucket.ingresos += Number(t.amount); totalIngresos += Number(t.amount); }
+    else { bucket.egresos += Number(t.amount); totalEgresos += Number(t.amount); }
+  });
+
+  const rows = [...byCategory.entries()].map(([category, v]) => `
+    <tr>
+      <td>${escapeHtml(category)}</td>
+      <td>${formatMoney(v.ingresos, 'CLP')}</td>
+      <td>${formatMoney(v.egresos, 'CLP')}</td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Categoría</th><th>Ingresos</th><th>Egresos</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong>${formatMoney(totalIngresos, 'CLP')}</strong></td>
+          <td><strong>${formatMoney(totalEgresos, 'CLP')}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>Resultado del periodo</strong></td>
+          <td><strong>${formatMoney(totalIngresos - totalEgresos, 'CLP')}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
+document.getElementById('eerrFrom').addEventListener('change', loadEerr);
+document.getElementById('eerrTo').addEventListener('change', loadEerr);
+
+// ── Importación de Excel (SheetJS, cargado solo acá — el sitio público sigue sin CDN) ──
+let pendingImportRows = null;
+
+document.getElementById('excelFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  const preview = document.getElementById('excelPreviewContainer');
+  if (!file) return;
+
+  preview.innerHTML = '<p class="admin-note">Leyendo archivo...</p>';
+  try {
+    const XLSX = await import('https://esm.sh/xlsx@0.18.5');
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+
+    // Se asume: fecha, tipo, categoría, descripción, monto — sin fila de encabezado o con ella (se filtra por tipo válido).
+    const parsed = rows
+      .map((r) => ({
+        transaction_date: r[0],
+        type: String(r[1] || '').trim().toLowerCase(),
+        category: r[2],
+        description: r[3] || '',
+        amount: Number(r[4]),
+      }))
+      .filter((r) => (r.type === 'ingreso' || r.type === 'egreso') && r.transaction_date && !Number.isNaN(r.amount));
+
+    if (!parsed.length) {
+      preview.innerHTML = '<p class="admin-note">No se encontraron filas válidas. Revisa el formato de columnas en backend/SETUP.md.</p>';
+      pendingImportRows = null;
+      return;
+    }
+
+    pendingImportRows = { rows: parsed, file };
+    preview.innerHTML = `
+      <p class="admin-note">${parsed.length} filas detectadas. Revisa antes de confirmar:</p>
+      <table class="admin-table">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
+        <tbody>${parsed.slice(0, 50).map((r) => `
+          <tr><td>${escapeHtml(r.transaction_date)}</td><td>${escapeHtml(r.type)}</td><td>${escapeHtml(r.category)}</td><td>${escapeHtml(r.description)}</td><td>${r.amount}</td></tr>
+        `).join('')}</tbody>
+      </table>
+      ${parsed.length > 50 ? `<p class="admin-note">Mostrando 50 de ${parsed.length}.</p>` : ''}
+      <button id="confirmImportBtn" class="admin-btn primary">Confirmar importación</button>
+      <button id="cancelImportBtn" class="admin-btn">Cancelar</button>
+      <p id="importMsg" class="admin-note"></p>
+    `;
+
+    document.getElementById('cancelImportBtn').addEventListener('click', () => {
+      pendingImportRows = null;
+      preview.innerHTML = '';
+      e.target.value = '';
+    });
+
+    document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+  } catch (err) {
+    console.error('excel parse failed', err);
+    preview.innerHTML = '<p class="admin-note">No se pudo leer el archivo. ¿Es un .xlsx/.xls válido?</p>';
+    pendingImportRows = null;
+  }
+});
+
+async function confirmImport() {
+  if (!pendingImportRows) return;
+  const { rows, file } = pendingImportRows;
+  const msg = document.getElementById('importMsg');
+  const confirmBtn = document.getElementById('confirmImportBtn');
+  confirmBtn.disabled = true;
+  msg.textContent = 'Importando...';
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const batchId = crypto.randomUUID();
+  const storagePath = `${batchId}/${file.name}`;
+
+  const { error: uploadError } = await supabase.storage.from('finance-imports').upload(storagePath, file);
+  if (uploadError) {
+    msg.textContent = 'Error subiendo el archivo original.';
+    confirmBtn.disabled = false;
+    return;
+  }
+
+  const { error: insertError } = await supabase.from('finance_transactions').insert(
+    rows.map((r) => ({
+      transaction_date: r.transaction_date,
+      type: r.type,
+      category: r.category || 'otro',
+      description: r.description || null,
+      amount: r.amount,
+      currency: 'CLP',
+      source: 'excel_import',
+      import_batch_id: batchId,
+      created_by: session.user.id,
+    }))
+  );
+
+  await supabase.from('finance_imports').insert({
+    filename: file.name,
+    storage_path: storagePath,
+    uploaded_by: session.user.id,
+    row_count: rows.length,
+    status: insertError ? 'error' : 'procesado',
+    notes: insertError ? String(insertError.message || insertError) : null,
+  });
+
+  if (insertError) {
+    msg.textContent = 'El archivo se guardó, pero hubo un error insertando las filas. Revisa el formato.';
+    confirmBtn.disabled = false;
+    return;
+  }
+
+  msg.textContent = `${rows.length} movimientos importados con éxito.`;
+  pendingImportRows = null;
+  document.getElementById('excelFileInput').value = '';
+  await Promise.all([loadTransactionsTable(), loadCashFlow()]);
+}

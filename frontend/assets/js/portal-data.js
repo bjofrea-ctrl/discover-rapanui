@@ -11,6 +11,21 @@ const VENDOR_COORDINACION = new Set(['coordinador']);
 const VENDOR_EMERGENCIAS = new Set(['emergencia']);
 const VENDOR_PROVEEDORES = new Set(['fotografia', 'banqueteria', 'musica', 'flores', 'otro']);
 
+const SERVICE_TYPE_LABELS = {
+  ceremonia_ancestral: 'Ceremonia Ancestral',
+  ceremonia_civil: 'Ceremonia Civil',
+  arriendo_casa: 'Arriendo de Casa',
+  restaurant: 'Restaurant',
+  cena: 'Cena',
+  coctel: 'Cóctel',
+  tour: 'Tour',
+  fotografia: 'Fotografía',
+  musica: 'Música',
+  flores: 'Flores',
+  transporte: 'Transporte',
+  otro: 'Otro',
+};
+
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -66,6 +81,20 @@ function renderVendorList(container, vendors) {
   `).join('')}</ul>`;
 }
 
+function renderServices(container, services) {
+  if (!services || services.length === 0) {
+    setEmpty(container, 'Tu coordinador aún no ha cargado las actividades de tu experiencia.');
+    return;
+  }
+  container.innerHTML = `<ul>${services.map((s) => `
+    <li>
+      <strong>${escapeHtml(SERVICE_TYPE_LABELS[s.service_type] || s.service_type)}</strong>
+      ${s.description ? ` — ${escapeHtml(s.description)}` : ''}
+      ${s.scheduled_date ? `<br><small>${escapeHtml(s.scheduled_date)}</small>` : ''}
+    </li>
+  `).join('')}</ul>`;
+}
+
 async function renderDocuments(container, documents) {
   if (!documents || documents.length === 0) {
     setEmpty(container, 'Tu coordinador aún no ha compartido documentos.');
@@ -97,7 +126,7 @@ async function toggleChecklistItem(itemId, checked, checkboxEl) {
 
 function showNoEventState() {
   const message = 'Aún no vinculamos un evento a tu cuenta. Escríbenos a tu coordinador y lo resolvemos.';
-  ['timelineContainer', 'checklistCivil', 'checklistAncestral', 'documentsContainer',
+  ['timelineContainer', 'servicesContainer', 'checklistCivil', 'checklistAncestral', 'documentsContainer',
     'vendorCoordinacion', 'vendorProveedores', 'vendorEmergencias', 'checklistViaje']
     .forEach((id) => setEmpty(document.getElementById(id), message));
 }
@@ -135,14 +164,16 @@ async function loadAndRender(session) {
     return;
   }
 
-  const [milestonesRes, checklistRes, vendorsRes, documentsRes] = await Promise.all([
+  const [milestonesRes, checklistRes, vendorsRes, documentsRes, servicesRes] = await Promise.all([
     supabase.from('event_milestones').select('*').eq('event_id', event.id).order('order_index'),
     supabase.from('checklist_items').select('*').eq('event_id', event.id).order('order_index'),
     supabase.from('vendor_contacts').select('*').or(`event_id.eq.${event.id},is_global.eq.true`),
     supabase.from('documents').select('*').eq('event_id', event.id).order('created_at', { ascending: false }),
+    supabase.from('event_services').select('*').eq('event_id', event.id).order('scheduled_date', { ascending: true, nullsFirst: false }),
   ]);
 
   renderTimeline(document.getElementById('timelineContainer'), milestonesRes.data);
+  renderServices(document.getElementById('servicesContainer'), servicesRes.data);
 
   const checklist = checklistRes.data || [];
   renderChecklistGroup(

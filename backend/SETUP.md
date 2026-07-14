@@ -25,6 +25,22 @@ los dashboards web.
 2. Abre `backend/supabase/migrations/0001_init.sql` de este repo, copia todo el contenido, pégalo en el SQL Editor y ejecútalo (▶ Run). Es idempotente, se puede re-ejecutar sin problema.
 3. Verifica en **Table Editor** que aparecieron las tablas: `profiles`, `leads`, `clients`, `events`, `event_milestones`, `checklist_items`, `vendor_contacts`, `documents`, `messages`, `milestone_templates`, `checklist_templates`.
 4. Verifica en **Storage** que existe el bucket privado `event-documents`.
+5. Ejecuta también `backend/supabase/migrations/0002_budget_services_finance.sql` (mismo procedimiento: pegar en el SQL Editor y correr). Agrega presupuesto por evento, el listado de actividades/servicios incluidos (`event_services`) y el módulo de contabilidad (`finance_transactions`, `finance_imports`).
+6. Verifica en **Storage** que también existe el bucket privado `finance-imports`.
+
+### Formato del Excel para importar movimientos contables
+
+La sección "Contabilidad" del panel admin importa archivos `.xlsx`/`.xls` con **5 columnas, en este orden, sin encabezado obligatorio** (si hay una fila de encabezado, se descarta sola porque no calza con "ingreso"/"egreso"):
+
+| Columna | Contenido | Ejemplo |
+|---|---|---|
+| A | Fecha (`YYYY-MM-DD`) | `2026-03-15` |
+| B | Tipo (`ingreso` o `egreso`, en minúscula) | `ingreso` |
+| C | Categoría (texto libre, ej. `venta_evento`, `arriendo`, `sueldos`, `marketing`, `proveedores`) | `venta_evento` |
+| D | Descripción | `Seña boda María & Pablo` |
+| E | Monto (número, sin símbolo de moneda) | `1500000` |
+
+Todas las filas se importan en pesos chilenos (CLP). El admin ve una vista previa antes de confirmar, y el archivo original queda guardado en el bucket `finance-imports` para trazabilidad — se puede identificar y deshacer un import completo por su `import_batch_id` en la tabla `finance_transactions`.
 
 ## 3. Configurar Auth (magic link, sin registro público)
 
@@ -115,3 +131,8 @@ Después del primer deploy, vuelve al paso 3 y agrega la URL real de producción
 - [ ] Desde `admin/index.html`, abrir el editor del evento de prueba, agregar un hito de cronograma y un ítem de checklist → refrescar `portal.html` del cliente y confirmar que aparecen.
 - [ ] Marcar un ítem del checklist desde `portal.html` → confirmar que el cambio persiste al recargar, y que se refleja en el admin.
 - [ ] Crear una segunda cuenta de cliente de prueba y confirmar que **no** ve los datos del primer cliente (aislamiento por RLS).
+- [ ] En el editor del evento, guardar un presupuesto y agregar 2-3 servicios (ceremonia, tour, cena, etc.) → confirmar que el resumen "% del presupuesto" se calcula bien y que el cliente los ve en "Qué Incluye tu Experiencia" en `portal.html`.
+- [ ] En "Contabilidad", agregar un movimiento manual y confirmar que aparece en Flujo de Caja y en el listado.
+- [ ] Subir un Excel de prueba con el formato de 5 columnas documentado arriba → revisar la vista previa, confirmar, y verificar que las filas quedan en `finance_transactions` y el archivo en el bucket `finance-imports`.
+- [ ] Seleccionar un rango de meses en EERR y confirmar que los totales por categoría cuadran con lo cargado.
+- [ ] Con la cuenta de cliente de prueba (no admin), confirmar que no puede acceder a ninguna sección de Contabilidad (ni siquiera ve el panel admin, por el guard de `role`).
