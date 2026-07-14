@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin — Discover Rapa Nui</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    /* Estilos utilitarios exclusivos del panel admin — no toca style.css del sitio público */
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 80px; }
+    .admin-hidden { display: none !important; }
+    .admin-section { margin-bottom: 56px; }
+    .admin-section h2 { margin-bottom: 8px; }
+    .admin-section .sub { color: var(--text-light); font-size: 0.85rem; margin-bottom: 20px; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--white); }
+    .admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(0,0,0,0.08); vertical-align: top; }
+    .admin-table th { font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+    .admin-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; background: var(--sand); color: var(--text); }
+    .admin-btn { font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; padding: 6px 14px; border-radius: 4px; border: 1px solid var(--terracotta); background: transparent; color: var(--terracotta); cursor: pointer; }
+    .admin-btn:hover { background: var(--terracotta); color: var(--white); }
+    .admin-btn.primary { background: var(--terracotta); color: var(--white); }
+    .admin-form { display: grid; gap: 10px; background: var(--sand); padding: 20px; border-radius: 6px; margin-top: 12px; }
+    .admin-form input, .admin-form select { font-family: var(--font-body); padding: 8px 10px; border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; }
+    .admin-row-editor { margin-top: 10px; }
+    .admin-inline-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 8px; }
+    .admin-note { font-size: 0.75rem; color: var(--text-light); }
+    .admin-login-box { max-width: 420px; margin: 140px auto; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="adminLoginScreen" class="admin-wrap admin-login-box">
+    <div class="logo" style="margin-bottom: 24px;">Discover<span>.</span>Rapa Nui <span style="font-size:0.7rem; opacity:0.5;">/ admin</span></div>
+    <p style="margin-bottom: 16px;">Acceso exclusivo del equipo Discover Rapa Nui.</p>
+    <input type="email" id="adminEmailInput" placeholder="tu@discoverrapanui.cl" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid rgba(0,0,0,0.15); border-radius:4px;">
+    <button id="adminLoginBtn" class="admin-btn primary" style="width:100%; padding:12px;">Enviar enlace de acceso</button>
+    <p id="adminLoginMsg" class="admin-note" style="margin-top: 14px;"></p>
+  </div>
+
+  <!-- Forbidden (usuario logueado pero no admin) -->
+  <div id="adminForbidden" class="admin-wrap admin-login-box admin-hidden">
+    <p>Tu cuenta no tiene permisos de administrador.</p>
+    <button id="adminForbiddenLogout" class="admin-btn" style="margin-top: 16px;">Cerrar sesión</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="adminDashboard" class="admin-wrap admin-hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
+      <div class="logo">Discover<span>.</span>Rapa Nui <span style="font-size:0.7rem; opacity:0.5;">/ admin</span></div>
+      <button id="adminLogoutBtn" class="admin-btn">Cerrar sesión</button>
+    </div>
+
+    <!-- Leads pipeline -->
+    <div class="admin-section">
+      <h2>Pipeline de Leads</h2>
+      <p class="sub">Leads recibidos desde el formulario de contacto de la landing.</p>
+      <div id="leadsTableContainer">Cargando...</div>
+    </div>
+
+    <!-- Convertir lead en cliente -->
+    <div class="admin-section admin-hidden" id="convertLeadSection">
+      <h2>Convertir lead en cliente</h2>
+      <p class="sub">Crea la cuenta del cliente, su evento, y envía la invitación de acceso al portal.</p>
+      <form id="convertLeadForm" class="admin-form">
+        <div class="admin-inline-fields">
+          <input type="email" name="email" placeholder="Email" required>
+          <input type="text" name="partner1_name" placeholder="Nombre novio/a 1">
+          <input type="text" name="partner2_name" placeholder="Nombre novio/a 2">
+          <input type="text" name="phone" placeholder="Teléfono">
+          <input type="text" name="country" placeholder="País">
+        </div>
+        <div class="admin-inline-fields">
+          <select name="event_type">
+            <option value="elopement">Elopement</option>
+            <option value="boda_completa" selected>Boda Completa</option>
+            <option value="renovacion_votos">Renovación de votos</option>
+            <option value="tour">Tour</option>
+            <option value="otro">Otro</option>
+          </select>
+          <select name="ceremony_type">
+            <option value="">Tipo de ceremonia</option>
+            <option value="civil">Civil</option>
+            <option value="ancestral">Ancestral</option>
+            <option value="ambas">Ambas</option>
+          </select>
+          <input type="date" name="event_date">
+          <input type="number" name="guest_count" placeholder="N° invitados" min="0">
+          <input type="text" name="coordinator_name" placeholder="Coordinador asignado">
+        </div>
+        <input type="hidden" name="lead_id">
+        <button type="submit" class="admin-btn primary">Crear cliente + evento + invitar</button>
+        <button type="button" id="cancelConvertBtn" class="admin-btn">Cancelar</button>
+        <p id="convertLeadMsg" class="admin-note"></p>
+      </form>
+    </div>
+
+    <!-- Eventos / clientes -->
+    <div class="admin-section">
+      <h2>Clientes y Eventos</h2>
+      <p class="sub">Selecciona un evento para editar su cronograma y checklist.</p>
+      <div id="eventsTableContainer">Cargando...</div>
+    </div>
+
+    <!-- Editor de evento seleccionado -->
+    <div class="admin-section admin-hidden" id="eventEditorSection">
+      <h2>Editar evento: <span id="eventEditorTitle"></span></h2>
+      <p class="sub">Cronograma, checklist y proveedores asignados a este evento.</p>
+
+      <div class="admin-row-editor">
+        <h3>Cronograma</h3>
+        <div id="milestonesContainer"></div>
+        <form id="addMilestoneForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="text" name="phase_label" placeholder="Fase (ej: Mes 1-2 · Confirmación)" required>
+            <input type="text" name="title" placeholder="Título del hito" required>
+            <input type="date" name="due_date">
+          </div>
+          <input type="text" name="description" placeholder="Descripción">
+          <button type="submit" class="admin-btn">+ Agregar hito</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Checklist</h3>
+        <div id="checklistEditorContainer"></div>
+        <form id="addChecklistForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="category" required>
+              <option value="documentos_civil">Documentos · Civil</option>
+              <option value="documentos_ancestral">Documentos · Ancestral</option>
+              <option value="viaje">Checklist de viaje</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="label" placeholder="Ítem del checklist" required>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar ítem</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Proveedores asignados</h3>
+        <div id="vendorsEditorContainer"></div>
+        <form id="addVendorForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="category" required>
+              <option value="coordinador">Coordinador</option>
+              <option value="fotografia">Fotografía</option>
+              <option value="banqueteria">Banquetería</option>
+              <option value="musica">Música</option>
+              <option value="flores">Flores</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="name" placeholder="Nombre" required>
+            <input type="text" name="phone" placeholder="Teléfono">
+            <input type="text" name="email" placeholder="Email">
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar proveedor</button>
+        </form>
+      </div>
+
+      <button type="button" id="closeEventEditorBtn" class="admin-btn" style="margin-top: 20px;">← Volver a la lista</button>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>

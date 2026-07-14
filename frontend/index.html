@@ -312,13 +312,13 @@
             <div class="detail"><small>Instagram</small>@discover.rapanui</div>
           </div>
         </div>
-        <form class="contact-form reveal reveal-delay-1" id="contactForm">
+        <form class="contact-form reveal reveal-delay-1" id="contactForm" novalidate>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <input type="text" placeholder="Nombre" required>
-            <input type="email" placeholder="Email" required>
+            <input type="text" name="name" placeholder="Nombre" required>
+            <input type="email" name="email" placeholder="Email" required>
           </div>
-          <input type="text" placeholder="País de origen">
-          <select required>
+          <input type="text" name="country" placeholder="País de origen">
+          <select name="event_type" required>
             <option value="">Tipo de evento</option>
             <option>Boda / Ceremonia</option>
             <option>Elopement</option>
@@ -327,8 +327,14 @@
             <option>Hospedaje</option>
             <option>Otro</option>
           </select>
-          <input type="number" placeholder="N° aproximado de invitados" min="1">
-          <textarea placeholder="Cuéntanos sobre tu visión, fechas tentativas y cualquier detalle que quieras compartir..."></textarea>
+          <input type="number" name="guest_count" placeholder="N° aproximado de invitados" min="1">
+          <textarea name="message" placeholder="Cuéntanos sobre tu visión, fechas tentativas y cualquier detalle que quieras compartir..."></textarea>
+          <!-- Honeypot anti-spam: invisible para personas, los bots suelen completarlo -->
+          <div style="position: absolute; left: -9999px;" aria-hidden="true">
+            <label for="website">No completar este campo</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <p id="formError" style="display: none; color: var(--terracotta); font-size: 0.8rem; margin-top: -8px;"></p>
           <button type="submit">Enviar Mensaje</button>
         </form>
       </div>
@@ -348,6 +354,6 @@
     <p style="margin-top: 24px; opacity: 0.3; font-size: 0.7rem;">© 2025 Discover Rapa Nui. Todos los derechos reservados.</p>
   </footer>
 
-  <script src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
