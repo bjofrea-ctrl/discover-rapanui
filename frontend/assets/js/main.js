@@ -1,4 +1,4 @@
-import { CONFIG } from './supabaseClient.js';
+import { CONFIG } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
