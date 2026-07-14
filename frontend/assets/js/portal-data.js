@@ -127,9 +127,55 @@ async function toggleChecklistItem(itemId, checked, checkboxEl) {
 function showNoEventState() {
   const message = 'Aún no vinculamos un evento a tu cuenta. Escríbenos a tu coordinador y lo resolvemos.';
   ['timelineContainer', 'servicesContainer', 'checklistCivil', 'checklistAncestral', 'documentsContainer',
-    'vendorCoordinacion', 'vendorProveedores', 'vendorEmergencias', 'checklistViaje']
+    'vendorCoordinacion', 'vendorProveedores', 'vendorEmergencias', 'checklistViaje', 'messagesContainer']
     .forEach((id) => setEmpty(document.getElementById(id), message));
 }
+
+let currentEventId = null;
+
+function renderMessages(container, messages) {
+  if (!messages || messages.length === 0) {
+    setEmpty(container, 'Aún no hay mensajes. Escríbele a tu coordinador cuando quieras.');
+    return;
+  }
+  container.innerHTML = messages.map((m) => `
+    <div style="padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.06);">
+      <strong>${m.sender_role === 'cliente' ? 'Tú' : 'Tu coordinador'}</strong>
+      <small style="color: var(--text-light); margin-left: 8px;">${new Date(m.created_at).toLocaleString('es-CL')}</small>
+      <p>${escapeHtml(m.body)}</p>
+    </div>
+  `).join('');
+}
+
+async function loadMessages() {
+  const container = document.getElementById('messagesContainer');
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('event_id', currentEventId)
+    .order('created_at', { ascending: true });
+  if (error) { setEmpty(container, 'Error cargando mensajes.'); return; }
+  renderMessages(container, data);
+}
+
+document.getElementById('messageForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentEventId) return;
+  const bodyInput = document.getElementById('messageBody');
+  const { data: { session } } = await supabase.auth.getSession();
+  const { error } = await supabase.from('messages').insert({
+    event_id: currentEventId,
+    sender_id: session.user.id,
+    sender_role: 'cliente',
+    body: bodyInput.value,
+  });
+  if (error) {
+    console.error('send message failed', error);
+    return;
+  }
+  bodyInput.value = '';
+  loadMessages();
+});
 
 async function loadAndRender(session) {
   const welcomeNames = document.getElementById('welcomeNames');
@@ -164,6 +210,8 @@ async function loadAndRender(session) {
     return;
   }
 
+  currentEventId = event.id;
+
   const [milestonesRes, checklistRes, vendorsRes, documentsRes, servicesRes] = await Promise.all([
     supabase.from('event_milestones').select('*').eq('event_id', event.id).order('order_index'),
     supabase.from('checklist_items').select('*').eq('event_id', event.id).order('order_index'),
@@ -171,6 +219,8 @@ async function loadAndRender(session) {
     supabase.from('documents').select('*').eq('event_id', event.id).order('created_at', { ascending: false }),
     supabase.from('event_services').select('*').eq('event_id', event.id).order('scheduled_date', { ascending: true, nullsFirst: false }),
   ]);
+
+  await loadMessages();
 
   renderTimeline(document.getElementById('timelineContainer'), milestonesRes.data);
   renderServices(document.getElementById('servicesContainer'), servicesRes.data);

@@ -264,7 +264,97 @@
         </form>
       </div>
 
+      <div class="admin-row-editor">
+        <h3>Documentos</h3>
+        <div id="documentsEditorContainer"></div>
+        <form id="addDocumentForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="file" name="file" required>
+            <select name="category">
+              <option value="contrato">Contrato</option>
+              <option value="identificacion">Identificación</option>
+              <option value="itinerario">Itinerario</option>
+              <option value="otro" selected>Otro</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">Subir documento</button>
+          <p id="documentUploadMsg" class="admin-note"></p>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Mensajes con el cliente</h3>
+        <div id="messagesEditorContainer"></div>
+        <form id="addMessageForm" class="admin-form">
+          <textarea name="body" placeholder="Escribe un mensaje para el cliente..." required></textarea>
+          <button type="submit" class="admin-btn">Enviar mensaje</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Plantillas</h3>
+        <p class="admin-note">Aplica el cronograma y checklist estándar (definidos en la sección "Plantillas" más abajo) a este evento.</p>
+        <button type="button" id="applyTemplatesBtn" class="admin-btn">Aplicar plantillas a este evento</button>
+        <p id="applyTemplatesMsg" class="admin-note"></p>
+      </div>
+
       <button type="button" id="closeEventEditorBtn" class="admin-btn" style="margin-top: 20px;">← Volver a la lista</button>
+    </div>
+
+    <!-- Plantillas reutilizables -->
+    <div class="admin-section">
+      <h2>Plantillas</h2>
+      <p class="sub">Cronograma y checklist estándar por tipo de evento — se aplican con el botón "Aplicar plantillas" al editar un evento, o automáticamente al convertir un lead en cliente.</p>
+
+      <div class="admin-row-editor">
+        <h3>Hitos de cronograma</h3>
+        <div id="milestoneTemplatesContainer"></div>
+        <form id="addMilestoneTemplateForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="event_type" required>
+              <option value="elopement">Elopement</option>
+              <option value="boda_completa">Boda Completa</option>
+              <option value="renovacion_votos">Renovación de votos</option>
+              <option value="tour">Tour</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="phase_label" placeholder="Fase (ej: Mes 1-2 · Confirmación)" required>
+            <input type="text" name="title" placeholder="Título del hito" required>
+          </div>
+          <input type="text" name="description" placeholder="Descripción">
+          <button type="submit" class="admin-btn">+ Agregar hito a la plantilla</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Ítems de checklist</h3>
+        <div id="checklistTemplatesContainer"></div>
+        <form id="addChecklistTemplateForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="event_type" required>
+              <option value="elopement">Elopement</option>
+              <option value="boda_completa">Boda Completa</option>
+              <option value="renovacion_votos">Renovación de votos</option>
+              <option value="tour">Tour</option>
+              <option value="otro">Otro</option>
+            </select>
+            <select name="ceremony_type">
+              <option value="">Cualquier ceremonia</option>
+              <option value="civil">Civil</option>
+              <option value="ancestral">Ancestral</option>
+              <option value="ambas">Ambas</option>
+            </select>
+            <select name="category" required>
+              <option value="documentos_civil">Documentos · Civil</option>
+              <option value="documentos_ancestral">Documentos · Ancestral</option>
+              <option value="viaje">Checklist de viaje</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <input type="text" name="label" placeholder="Ítem del checklist" required>
+          <button type="submit" class="admin-btn">+ Agregar ítem a la plantilla</button>
+        </form>
+      </div>
     </div>
   </div>
 

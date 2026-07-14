@@ -110,7 +110,10 @@ async function handleSession(session) {
   }
 
   showScreen(dashboard);
-  await Promise.all([loadLeads(), loadEvents(), loadCashFlow(), loadTransactionsTable()]);
+  await Promise.all([
+    loadLeads(), loadEvents(), loadCashFlow(), loadTransactionsTable(),
+    loadMilestoneTemplates(), loadChecklistTemplates(),
+  ]);
 }
 
 supabase.auth.onAuthStateChange((_event, session) => handleSession(session));
@@ -298,6 +301,8 @@ function openEventEditor(ev) {
   loadChecklist();
   loadVendors();
   loadServices();
+  loadDocuments();
+  loadMessages();
 }
 
 document.getElementById('closeEventEditorBtn').addEventListener('click', () => {
@@ -831,3 +836,233 @@ async function confirmImport() {
   document.getElementById('excelFileInput').value = '';
   await Promise.all([loadTransactionsTable(), loadCashFlow()]);
 }
+
+// ============================================================
+// DOCUMENTOS DEL EVENTO
+// ============================================================
+async function loadDocuments() {
+  const container = document.getElementById('documentsEditorContainer');
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('event_id', currentEventId)
+    .order('created_at', { ascending: false });
+
+  if (error) { container.textContent = 'Error cargando documentos.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin documentos todavía.</p>'; return; }
+
+  const links = await Promise.all(data.map(async (doc) => {
+    const { data: signed } = await supabase.storage.from('event-documents').createSignedUrl(doc.storage_path, 60 * 60);
+    return { doc, url: signed?.signedUrl || '#' };
+  }));
+
+  container.innerHTML = links.map(({ doc, url }) => `
+    <div class="admin-inline-fields" data-document-id="${doc.id}" style="align-items:center;">
+      <span class="admin-badge">${escapeHtml(doc.category)}</span>
+      <a href="${url}" target="_blank" rel="noopener">${escapeHtml(doc.filename)}</a>
+      <button class="admin-btn delete-document-btn">Eliminar</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.delete-document-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      if (!confirm('¿Eliminar este documento?')) return;
+      const id = e.target.closest('[data-document-id]').dataset.documentId;
+      const doc = data.find((d) => d.id === id);
+      if (doc) await supabase.storage.from('event-documents').remove([doc.storage_path]);
+      await supabase.from('documents').delete().eq('id', id);
+      loadDocuments();
+    });
+  });
+}
+
+document.getElementById('addDocumentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const msg = document.getElementById('documentUploadMsg');
+  const file = form.file.files[0];
+  if (!file) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const storagePath = `${currentEventId}/${Date.now()}_${file.name}`;
+
+  msg.textContent = 'Subiendo...';
+  const { error: uploadError } = await supabase.storage.from('event-documents').upload(storagePath, file);
+  if (uploadError) {
+    console.error('document upload failed', uploadError);
+    msg.textContent = 'Error al subir el archivo.';
+    return;
+  }
+
+  const { error: insertError } = await supabase.from('documents').insert({
+    event_id: currentEventId,
+    storage_path: storagePath,
+    filename: file.name,
+    mime_type: file.type || null,
+    size_bytes: file.size,
+    category: form.category.value,
+    uploaded_by: session.user.id,
+  });
+
+  if (insertError) {
+    msg.textContent = 'Archivo subido, pero no se pudo registrar en la base de datos.';
+    return;
+  }
+
+  msg.textContent = 'Documento subido.';
+  form.reset();
+  loadDocuments();
+});
+
+// ============================================================
+// MENSAJES DEL EVENTO
+// ============================================================
+async function loadMessages() {
+  const container = document.getElementById('messagesEditorContainer');
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('event_id', currentEventId)
+    .order('created_at', { ascending: true });
+
+  if (error) { container.textContent = 'Error cargando mensajes.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin mensajes todavía.</p>'; return; }
+
+  container.innerHTML = data.map((m) => `
+    <div style="padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06);">
+      <span class="admin-badge">${m.sender_role === 'coordinador' ? 'Tú (coordinador)' : 'Cliente'}</span>
+      <span class="admin-note">${new Date(m.created_at).toLocaleString('es-CL')}</span>
+      <p>${escapeHtml(m.body)}</p>
+    </div>
+  `).join('');
+}
+
+document.getElementById('addMessageForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const { data: { session } } = await supabase.auth.getSession();
+  const { error } = await supabase.from('messages').insert({
+    event_id: currentEventId,
+    sender_id: session.user.id,
+    sender_role: 'coordinador',
+    body: form.body.value,
+  });
+  if (error) { alert('No se pudo enviar el mensaje.'); return; }
+  form.reset();
+  loadMessages();
+});
+
+// ============================================================
+// PLANTILLAS REUTILIZABLES (milestone_templates / checklist_templates)
+// ============================================================
+document.getElementById('applyTemplatesBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('applyTemplatesMsg');
+  msg.textContent = 'Aplicando...';
+  const { error } = await supabase.rpc('clone_templates_to_event', { p_event_id: currentEventId });
+  if (error) {
+    console.error('clone_templates_to_event failed', error);
+    msg.textContent = 'No se pudieron aplicar las plantillas.';
+    return;
+  }
+  msg.textContent = 'Plantillas aplicadas.';
+  await Promise.all([loadMilestones(), loadChecklist()]);
+});
+
+async function loadMilestoneTemplates() {
+  const container = document.getElementById('milestoneTemplatesContainer');
+  const { data, error } = await supabase
+    .from('milestone_templates')
+    .select('*')
+    .order('event_type')
+    .order('order_index');
+
+  if (error) { container.textContent = 'Error cargando plantillas de cronograma.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin plantillas de cronograma todavía.</p>'; return; }
+
+  container.innerHTML = data.map((t) => `
+    <div class="admin-inline-fields" data-template-id="${t.id}" style="align-items:center;">
+      <span class="admin-badge">${escapeHtml(EVENT_TYPE_LABELS[t.event_type] || t.event_type)}</span>
+      <strong>${escapeHtml(t.phase_label)}</strong>
+      <span>${escapeHtml(t.title)}</span>
+      <button class="admin-btn delete-milestone-template-btn">Eliminar</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.delete-milestone-template-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      if (!confirm('¿Eliminar este hito de la plantilla?')) return;
+      const id = e.target.closest('[data-template-id]').dataset.templateId;
+      await supabase.from('milestone_templates').delete().eq('id', id);
+      loadMilestoneTemplates();
+    });
+  });
+}
+
+document.getElementById('addMilestoneTemplateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const payload = Object.fromEntries(new FormData(form).entries());
+  const { count } = await supabase
+    .from('milestone_templates')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_type', payload.event_type);
+  await supabase.from('milestone_templates').insert({
+    event_type: payload.event_type,
+    phase_label: payload.phase_label,
+    title: payload.title,
+    description: payload.description || null,
+    order_index: count ?? 0,
+  });
+  form.reset();
+  loadMilestoneTemplates();
+});
+
+async function loadChecklistTemplates() {
+  const container = document.getElementById('checklistTemplatesContainer');
+  const { data, error } = await supabase
+    .from('checklist_templates')
+    .select('*')
+    .order('event_type')
+    .order('order_index');
+
+  if (error) { container.textContent = 'Error cargando plantillas de checklist.'; return; }
+  if (!data.length) { container.innerHTML = '<p class="admin-note">Sin plantillas de checklist todavía.</p>'; return; }
+
+  container.innerHTML = data.map((t) => `
+    <div class="admin-inline-fields" data-template-id="${t.id}" style="align-items:center;">
+      <span class="admin-badge">${escapeHtml(EVENT_TYPE_LABELS[t.event_type] || t.event_type)}</span>
+      <span class="admin-badge">${escapeHtml(t.ceremony_type || 'cualquiera')}</span>
+      <span class="admin-badge">${escapeHtml(t.category)}</span>
+      <span>${escapeHtml(t.label)}</span>
+      <button class="admin-btn delete-checklist-template-btn">Eliminar</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.delete-checklist-template-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      if (!confirm('¿Eliminar este ítem de la plantilla?')) return;
+      const id = e.target.closest('[data-template-id]').dataset.templateId;
+      await supabase.from('checklist_templates').delete().eq('id', id);
+      loadChecklistTemplates();
+    });
+  });
+}
+
+document.getElementById('addChecklistTemplateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const payload = Object.fromEntries(new FormData(form).entries());
+  const { count } = await supabase
+    .from('checklist_templates')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_type', payload.event_type);
+  await supabase.from('checklist_templates').insert({
+    event_type: payload.event_type,
+    ceremony_type: payload.ceremony_type || null,
+    category: payload.category,
+    label: payload.label,
+    order_index: count ?? 0,
+  });
+  form.reset();
+  loadChecklistTemplates();
+});
