@@ -21,7 +21,7 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 100px; }
 
 body {
   font-family: var(--font-body);
@@ -49,9 +49,9 @@ nav {
   padding: 20px 40px;
   display: flex; align-items: center; justify-content: space-between;
   transition: background 0.4s, padding 0.4s;
-  mix-blend-mode: difference;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0));
 }
-nav.scrolled { background: rgba(15,15,15,0.92); padding: 14px 40px; backdrop-filter: blur(20px); mix-blend-mode: normal; }
+nav.scrolled { background: rgba(15,15,15,0.92); padding: 14px 40px; backdrop-filter: blur(20px); }
 nav .logo { font-family: var(--font-display); font-size: 1.3rem; color: var(--white); text-decoration: none; letter-spacing: 2px; font-weight: 700; }
 nav .logo span { color: var(--gold); }
 nav .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
@@ -204,6 +204,7 @@ section { padding: 120px 40px; position: relative; }
 }
 .plan-name { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; }
 .plan-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 8px 0 24px; }
+.plan-price { font-family: var(--font-display); font-size: 1.6rem; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
 .plan-price-note { font-size: 0.75rem; color: var(--gold); letter-spacing: 1px; margin-bottom: 24px; font-weight: 500; }
 .plan-features { list-style: none; }
 .plan-features li {
@@ -471,10 +472,11 @@ footer .divider { width: 40px; height: 1px; background: var(--gold); margin: 24p
   nav .nav-links { display: none; }
   .menu-toggle { display: block; }
   nav .nav-links.open {
-    display: flex; position: fixed; inset: 0; background: rgba(15,15,15,0.98);
+    display: flex; position: fixed; inset: 0; background: rgba(15,15,15,0.98); z-index: 1;
     flex-direction: column; justify-content: center; align-items: center;
     gap: 24px;
   }
+  .menu-toggle { position: relative; z-index: 2; }
   nav .nav-links.open a { font-size: 1.1rem; }
   .plans-grid { grid-template-columns: 1fr; }
   .tours-grid { grid-template-columns: 1fr; }
@@ -486,4 +488,19 @@ footer .divider { width: 40px; height: 1px; background: var(--gold); margin: 24p
   .stats { grid-template-columns: 1fr; }
   .checklist-grid { grid-template-columns: 1fr; }
   .plan-card { padding: 36px 28px; }
+}
+
+/* ── WhatsApp flotante ── */
+.whatsapp-float {
+  position: fixed; right: 24px; bottom: 24px; z-index: 90;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--teal); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  transition: transform 0.3s, background 0.3s;
+}
+.whatsapp-float:hover { background: var(--teal-light); transform: scale(1.08); }
+@media (max-width: 768px) {
+  .whatsapp-float { right: 16px; bottom: 16px; width: 50px; height: 50px; font-size: 1.4rem; }
 }

@@ -86,7 +86,8 @@
       <div class="plan-card reveal">
         <h3 class="plan-name">Elopement Íntimo</h3>
         <p class="plan-desc">Para parejas que buscan una ceremonia privada, íntima y profundamente significativa.</p>
-        <p class="plan-price-note">* Valor variable según temporada y servicios</p>
+        <p class="plan-price">Desde USD 4.000</p>
+        <p class="plan-price-note">* Valor final según temporada y servicios adicionales</p>
         <ul class="plan-features">
           <li>Ceremonia simbólica o ancestral Rapa Nui</li>
           <li>Maestro de ceremonia local (koro)</li>
@@ -104,7 +105,8 @@
         <div class="plan-badge">Más Elegido</div>
         <h3 class="plan-name">Boda Completa</h3>
         <p class="plan-desc">Para celebrar con familia e invitados. Una experiencia integral con todos los servicios.</p>
-        <p class="plan-price-note">* Valor variable según cantidad de invitados</p>
+        <p class="plan-price">Desde USD 12.000</p>
+        <p class="plan-price-note">* Valor final según cantidad de invitados</p>
         <ul class="plan-features">
           <li>Todo lo del plan Elopement</li>
           <li>Ceremonia civil + simbólica/ancestral</li>
@@ -206,7 +208,7 @@
         </div>
       </div>
       <div class="cabana-card reveal reveal-delay-1">
-        <div class="cabana-image" style="background-image: url('assets/images/gallery8.jpg');"></div>
+        <div class="cabana-image" style="background-image: url('assets/images/hero2.jpg');"></div>
         <div class="cabana-info">
           <h3>Villa Mana Rapa Nui</h3>
           <p>Casa completa con 3 dormitorios, piscina privada y jardín tropical. Ideal para grupos de invitados o familias. Ubicación exclusiva en la zona alta de la isla.</p>
@@ -236,7 +238,7 @@
       <img src="assets/images/gallery5.jpg" alt="Moai Rapa Nui" class="wide" loading="lazy">
       <img src="assets/images/gallery6.jpg" alt="Tour Rapa Nui" loading="lazy">
       <img src="assets/images/gallery7.jpg" alt="Cabaña Rapa Nui" loading="lazy">
-      <img src="assets/images/gallery8.jpg" alt="Experiencia Rapa Nui" loading="lazy">
+      <img src="assets/images/gallery1.jpg" alt="Experiencia Rapa Nui" loading="lazy">
     </div>
   </section>
 
@@ -312,13 +314,13 @@
             <div class="detail"><small>Instagram</small>@discover.rapanui</div>
           </div>
         </div>
-        <form class="contact-form reveal reveal-delay-1" id="contactForm">
+        <form class="contact-form reveal reveal-delay-1" id="contactForm" novalidate>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <input type="text" placeholder="Nombre" required>
-            <input type="email" placeholder="Email" required>
+            <input type="text" name="name" placeholder="Nombre" required>
+            <input type="email" name="email" placeholder="Email" required>
           </div>
-          <input type="text" placeholder="País de origen">
-          <select required>
+          <input type="text" name="country" placeholder="País de origen">
+          <select name="event_type" required>
             <option value="">Tipo de evento</option>
             <option>Boda / Ceremonia</option>
             <option>Elopement</option>
@@ -327,8 +329,14 @@
             <option>Hospedaje</option>
             <option>Otro</option>
           </select>
-          <input type="number" placeholder="N° aproximado de invitados" min="1">
-          <textarea placeholder="Cuéntanos sobre tu visión, fechas tentativas y cualquier detalle que quieras compartir..."></textarea>
+          <input type="number" name="guest_count" placeholder="N° aproximado de invitados" min="1">
+          <textarea name="message" placeholder="Cuéntanos sobre tu visión, fechas tentativas y cualquier detalle que quieras compartir..."></textarea>
+          <!-- Honeypot anti-spam: invisible para personas, los bots suelen completarlo -->
+          <div style="position: absolute; left: -9999px;" aria-hidden="true">
+            <label for="website">No completar este campo</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <p id="formError" style="display: none; color: var(--terracotta); font-size: 0.8rem; margin-top: -8px;"></p>
           <button type="submit">Enviar Mensaje</button>
         </form>
       </div>
@@ -342,12 +350,16 @@
     <p>Bodas destino · Experiencias culturales · Hospedaje boutique · Isla de Pascua, Chile</p>
     <div class="social">
       <a href="https://www.instagram.com/discover.rapanui/" target="_blank" rel="noopener" aria-label="Instagram">📷</a>
-      <a href="#" aria-label="WhatsApp">💬</a>
-      <a href="#" aria-label="Email">✉️</a>
+      <a href="https://wa.me/56900000000" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+      <a href="mailto:info@discoverrapanui.cl" aria-label="Email">✉️</a>
     </div>
     <p style="margin-top: 24px; opacity: 0.3; font-size: 0.7rem;">© 2025 Discover Rapa Nui. Todos los derechos reservados.</p>
   </footer>
 
-  <script src="assets/js/main.js"></script>
+  <!-- TODO: reemplazar 56900000000 por el número real de WhatsApp Business antes de publicar -->
+  <a href="https://wa.me/56900000000?text=Hola%2C%20quiero%20consultar%20por%20una%20boda%20en%20Rapa%20Nui"
+     class="whatsapp-float" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">💬</a>
+
+  <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>

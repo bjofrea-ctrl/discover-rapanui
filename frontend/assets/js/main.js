@@ -1,3 +1,5 @@
+import { CONFIG } from './config.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
   // Loader
@@ -46,20 +48,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-  // Contact form handler
+  // Contact form handler — envía el lead al backend real (Supabase Edge Function)
   const contactForm = document.getElementById('contactForm');
+  const formError = document.getElementById('formError');
   if (contactForm) {
-    contactForm.addEventListener('submit', e => {
+    contactForm.addEventListener('submit', async e => {
       e.preventDefault();
       const btn = contactForm.querySelector('button');
       const originalText = btn.textContent;
-      btn.textContent = 'Mensaje Enviado ✓';
-      btn.style.background = '#2a7d7a';
-      setTimeout(() => {
+
+      if (formError) formError.style.display = 'none';
+
+      const formData = new FormData(contactForm);
+      const payload = Object.fromEntries(formData.entries());
+      if (payload.guest_count === '') delete payload.guest_count;
+      else if (payload.guest_count) payload.guest_count = Number(payload.guest_count);
+
+      if (!payload.name || !payload.email || !payload.event_type) {
+        if (formError) {
+          formError.textContent = 'Por favor completa nombre, email y tipo de evento.';
+          formError.style.display = 'block';
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch(CONFIG.SUBMIT_LEAD_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: CONFIG.SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`request_failed_${res.status}`);
+
+        btn.textContent = 'Mensaje Enviado ✓';
+        btn.style.background = '#2a7d7a';
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.background = '';
+          contactForm.reset();
+        }, 3000);
+      } catch (err) {
+        console.error('submit-lead failed', err);
+        btn.disabled = false;
         btn.textContent = originalText;
-        btn.style.background = '';
-        contactForm.reset();
-      }, 3000);
+        if (formError) {
+          formError.textContent = 'No pudimos enviar tu mensaje. Intenta nuevamente o escríbenos por Instagram/WhatsApp.';
+          formError.style.display = 'block';
+        }
+      }
     });
   }
 

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin — Discover Rapa Nui</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    /* Estilos utilitarios exclusivos del panel admin — no toca style.css del sitio público */
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 80px; }
+    .admin-hidden { display: none !important; }
+    .admin-section { margin-bottom: 56px; }
+    .admin-section h2 { margin-bottom: 8px; }
+    .admin-section .sub { color: var(--text-light); font-size: 0.85rem; margin-bottom: 20px; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: var(--white); }
+    .admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(0,0,0,0.08); vertical-align: top; }
+    .admin-table th { font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+    .admin-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; background: var(--sand); color: var(--text); }
+    .admin-btn { font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; padding: 6px 14px; border-radius: 4px; border: 1px solid var(--terracotta); background: transparent; color: var(--terracotta); cursor: pointer; }
+    .admin-btn:hover { background: var(--terracotta); color: var(--white); }
+    .admin-btn.primary { background: var(--terracotta); color: var(--white); }
+    .admin-form { display: grid; gap: 10px; background: var(--sand); padding: 20px; border-radius: 6px; margin-top: 12px; }
+    .admin-form input, .admin-form select { font-family: var(--font-body); padding: 8px 10px; border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; font-size: 0.85rem; }
+    .admin-row-editor { margin-top: 10px; }
+    .admin-inline-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 8px; }
+    .admin-note { font-size: 0.75rem; color: var(--text-light); }
+    .admin-login-box { max-width: 420px; margin: 140px auto; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="adminLoginScreen" class="admin-wrap admin-login-box">
+    <div class="logo" style="margin-bottom: 24px;">Discover<span>.</span>Rapa Nui <span style="font-size:0.7rem; opacity:0.5;">/ admin</span></div>
+    <p style="margin-bottom: 16px;">Acceso exclusivo del equipo Discover Rapa Nui.</p>
+    <input type="email" id="adminEmailInput" placeholder="tu@discoverrapanui.cl" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid rgba(0,0,0,0.15); border-radius:4px;">
+    <button id="adminLoginBtn" class="admin-btn primary" style="width:100%; padding:12px;">Enviar enlace de acceso</button>
+    <p id="adminLoginMsg" class="admin-note" style="margin-top: 14px;"></p>
+  </div>
+
+  <!-- Forbidden (usuario logueado pero no admin) -->
+  <div id="adminForbidden" class="admin-wrap admin-login-box admin-hidden">
+    <p>Tu cuenta no tiene permisos de administrador.</p>
+    <button id="adminForbiddenLogout" class="admin-btn" style="margin-top: 16px;">Cerrar sesión</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="adminDashboard" class="admin-wrap admin-hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
+      <div class="logo">Discover<span>.</span>Rapa Nui <span style="font-size:0.7rem; opacity:0.5;">/ admin</span></div>
+      <button id="adminLogoutBtn" class="admin-btn">Cerrar sesión</button>
+    </div>
+
+    <!-- Leads pipeline -->
+    <div class="admin-section">
+      <h2>Pipeline de Leads</h2>
+      <p class="sub">Leads recibidos desde el formulario de contacto de la landing.</p>
+      <div id="leadsTableContainer">Cargando...</div>
+    </div>
+
+    <!-- Convertir lead en cliente -->
+    <div class="admin-section admin-hidden" id="convertLeadSection">
+      <h2>Convertir lead en cliente</h2>
+      <p class="sub">Crea la cuenta del cliente, su evento, y envía la invitación de acceso al portal.</p>
+      <form id="convertLeadForm" class="admin-form">
+        <div class="admin-inline-fields">
+          <input type="email" name="email" placeholder="Email" required>
+          <input type="text" name="partner1_name" placeholder="Nombre novio/a 1">
+          <input type="text" name="partner2_name" placeholder="Nombre novio/a 2">
+          <input type="text" name="phone" placeholder="Teléfono">
+          <input type="text" name="country" placeholder="País">
+        </div>
+        <div class="admin-inline-fields">
+          <select name="event_type">
+            <option value="elopement">Elopement</option>
+            <option value="boda_completa" selected>Boda Completa</option>
+            <option value="renovacion_votos">Renovación de votos</option>
+            <option value="tour">Tour</option>
+            <option value="otro">Otro</option>
+          </select>
+          <select name="ceremony_type">
+            <option value="">Tipo de ceremonia</option>
+            <option value="civil">Civil</option>
+            <option value="ancestral">Ancestral</option>
+            <option value="ambas">Ambas</option>
+          </select>
+          <input type="date" name="event_date">
+          <input type="number" name="guest_count" placeholder="N° invitados" min="0">
+          <input type="text" name="coordinator_name" placeholder="Coordinador asignado">
+        </div>
+        <input type="hidden" name="lead_id">
+        <button type="submit" class="admin-btn primary">Crear cliente + evento + invitar</button>
+        <button type="button" id="cancelConvertBtn" class="admin-btn">Cancelar</button>
+        <p id="convertLeadMsg" class="admin-note"></p>
+      </form>
+    </div>
+
+    <!-- Eventos / clientes -->
+    <div class="admin-section">
+      <h2>Clientes y Eventos</h2>
+      <p class="sub">Selecciona un evento para editar su cronograma y checklist.</p>
+      <div id="eventsTableContainer">Cargando...</div>
+    </div>
+
+    <!-- Contabilidad de la empresa -->
+    <div class="admin-section">
+      <h2>Contabilidad</h2>
+      <p class="sub">Flujo de caja y Estado de Resultados de la empresa. Información interna — nunca visible para clientes.</p>
+
+      <div class="admin-row-editor">
+        <h3>Importar movimientos desde Excel</h3>
+        <p class="admin-note">Columnas esperadas (en este orden): fecha, tipo (ingreso/egreso), categoría, descripción, monto. Ver <code>backend/SETUP.md</code>.</p>
+        <input type="file" id="excelFileInput" accept=".xlsx,.xls">
+        <div id="excelPreviewContainer"></div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Agregar movimiento manual</h3>
+        <form id="addTransactionForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="date" name="transaction_date" required>
+            <select name="type" required>
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+            <input type="text" name="category" placeholder="Categoría (ej: venta_evento, arriendo)" required>
+          </div>
+          <div class="admin-inline-fields">
+            <input type="text" name="description" placeholder="Descripción">
+            <input type="number" name="amount" placeholder="Monto" min="0" step="1" required>
+            <select name="currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar movimiento</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Flujo de Caja (por mes)</h3>
+        <div id="cashFlowContainer">Cargando...</div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Estado de Resultados (EERR)</h3>
+        <div class="admin-inline-fields" style="max-width: 400px;">
+          <input type="month" id="eerrFrom">
+          <input type="month" id="eerrTo">
+        </div>
+        <div id="eerrContainer">Selecciona un rango de meses.</div>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Movimientos registrados</h3>
+        <div id="transactionsTableContainer">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Editor de evento seleccionado -->
+    <div class="admin-section admin-hidden" id="eventEditorSection">
+      <h2>Editar evento: <span id="eventEditorTitle"></span></h2>
+      <p class="sub">Presupuesto, cronograma, checklist, servicios y proveedores asignados a este evento.</p>
+
+      <div class="admin-row-editor">
+        <h3>Presupuesto</h3>
+        <form id="budgetForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="number" name="budget_amount" placeholder="Monto presupuestado" min="0" step="1">
+            <select name="budget_currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">Guardar presupuesto</button>
+          <p id="budgetSummary" class="admin-note"></p>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Actividades y Servicios Incluidos</h3>
+        <div id="servicesEditorContainer"></div>
+        <form id="addServiceForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="service_type" required>
+              <option value="ceremonia_ancestral">Ceremonia Ancestral</option>
+              <option value="ceremonia_civil">Ceremonia Civil</option>
+              <option value="arriendo_casa">Arriendo de Casa</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="cena">Cena</option>
+              <option value="coctel">Cóctel</option>
+              <option value="tour">Tour</option>
+              <option value="fotografia">Fotografía</option>
+              <option value="musica">Música</option>
+              <option value="flores">Flores</option>
+              <option value="transporte">Transporte</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="description" placeholder="Descripción">
+            <input type="date" name="scheduled_date">
+          </div>
+          <div class="admin-inline-fields">
+            <input type="number" name="quantity" placeholder="Cantidad" min="1" value="1">
+            <input type="number" name="cost" placeholder="Costo" min="0" step="1">
+            <select name="currency">
+              <option value="CLP">CLP</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar servicio</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Cronograma</h3>
+        <div id="milestonesContainer"></div>
+        <form id="addMilestoneForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="text" name="phase_label" placeholder="Fase (ej: Mes 1-2 · Confirmación)" required>
+            <input type="text" name="title" placeholder="Título del hito" required>
+            <input type="date" name="due_date">
+          </div>
+          <input type="text" name="description" placeholder="Descripción">
+          <button type="submit" class="admin-btn">+ Agregar hito</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Checklist</h3>
+        <div id="checklistEditorContainer"></div>
+        <form id="addChecklistForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="category" required>
+              <option value="documentos_civil">Documentos · Civil</option>
+              <option value="documentos_ancestral">Documentos · Ancestral</option>
+              <option value="viaje">Checklist de viaje</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="label" placeholder="Ítem del checklist" required>
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar ítem</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Proveedores asignados</h3>
+        <div id="vendorsEditorContainer"></div>
+        <form id="addVendorForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="category" required>
+              <option value="coordinador">Coordinador</option>
+              <option value="fotografia">Fotografía</option>
+              <option value="banqueteria">Banquetería</option>
+              <option value="musica">Música</option>
+              <option value="flores">Flores</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="name" placeholder="Nombre" required>
+            <input type="text" name="phone" placeholder="Teléfono">
+            <input type="text" name="email" placeholder="Email">
+          </div>
+          <button type="submit" class="admin-btn">+ Agregar proveedor</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Documentos</h3>
+        <div id="documentsEditorContainer"></div>
+        <form id="addDocumentForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <input type="file" name="file" required>
+            <select name="category">
+              <option value="contrato">Contrato</option>
+              <option value="identificacion">Identificación</option>
+              <option value="itinerario">Itinerario</option>
+              <option value="otro" selected>Otro</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn">Subir documento</button>
+          <p id="documentUploadMsg" class="admin-note"></p>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Mensajes con el cliente</h3>
+        <div id="messagesEditorContainer"></div>
+        <form id="addMessageForm" class="admin-form">
+          <textarea name="body" placeholder="Escribe un mensaje para el cliente..." required></textarea>
+          <button type="submit" class="admin-btn">Enviar mensaje</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Plantillas</h3>
+        <p class="admin-note">Aplica el cronograma y checklist estándar (definidos en la sección "Plantillas" más abajo) a este evento.</p>
+        <button type="button" id="applyTemplatesBtn" class="admin-btn">Aplicar plantillas a este evento</button>
+        <p id="applyTemplatesMsg" class="admin-note"></p>
+      </div>
+
+      <button type="button" id="closeEventEditorBtn" class="admin-btn" style="margin-top: 20px;">← Volver a la lista</button>
+    </div>
+
+    <!-- Plantillas reutilizables -->
+    <div class="admin-section">
+      <h2>Plantillas</h2>
+      <p class="sub">Cronograma y checklist estándar por tipo de evento — se aplican con el botón "Aplicar plantillas" al editar un evento, o automáticamente al convertir un lead en cliente.</p>
+
+      <div class="admin-row-editor">
+        <h3>Hitos de cronograma</h3>
+        <div id="milestoneTemplatesContainer"></div>
+        <form id="addMilestoneTemplateForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="event_type" required>
+              <option value="elopement">Elopement</option>
+              <option value="boda_completa">Boda Completa</option>
+              <option value="renovacion_votos">Renovación de votos</option>
+              <option value="tour">Tour</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="phase_label" placeholder="Fase (ej: Mes 1-2 · Confirmación)" required>
+            <input type="text" name="title" placeholder="Título del hito" required>
+          </div>
+          <input type="text" name="description" placeholder="Descripción">
+          <button type="submit" class="admin-btn">+ Agregar hito a la plantilla</button>
+        </form>
+      </div>
+
+      <div class="admin-row-editor">
+        <h3>Ítems de checklist</h3>
+        <div id="checklistTemplatesContainer"></div>
+        <form id="addChecklistTemplateForm" class="admin-form">
+          <div class="admin-inline-fields">
+            <select name="event_type" required>
+              <option value="elopement">Elopement</option>
+              <option value="boda_completa">Boda Completa</option>
+              <option value="renovacion_votos">Renovación de votos</option>
+              <option value="tour">Tour</option>
+              <option value="otro">Otro</option>
+            </select>
+            <select name="ceremony_type">
+              <option value="">Cualquier ceremonia</option>
+              <option value="civil">Civil</option>
+              <option value="ancestral">Ancestral</option>
+              <option value="ambas">Ambas</option>
+            </select>
+            <select name="category" required>
+              <option value="documentos_civil">Documentos · Civil</option>
+              <option value="documentos_ancestral">Documentos · Ancestral</option>
+              <option value="viaje">Checklist de viaje</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <input type="text" name="label" placeholder="Ítem del checklist" required>
+          <button type="submit" class="admin-btn">+ Agregar ítem a la plantilla</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>

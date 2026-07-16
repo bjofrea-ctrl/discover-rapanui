@@ -15,10 +15,13 @@
   <div class="login-screen" id="loginScreen">
     <div class="login-box">
       <div class="logo">Discover<span>.</span>Rapa Nui</div>
-      <p>Ingresa tu código de acceso para entrar al portal de clientes</p>
-      <input type="password" id="passwordInput" placeholder="Código de acceso" autocomplete="off">
-      <div class="login-error" id="loginError">Código incorrecto. Intenta nuevamente.</div>
-      <button id="loginBtn">Ingresar al Portal</button>
+      <p id="loginIntro">Ingresa el email con el que te registramos y te enviaremos un enlace de acceso.</p>
+      <input type="email" id="emailInput" placeholder="tu@email.com" autocomplete="email">
+      <div class="login-error" id="loginError">No pudimos enviar el enlace. Verifica tu email e intenta nuevamente.</div>
+      <div class="login-success" id="loginSuccess" style="display:none; color: var(--teal-light); font-size: 0.85rem; margin-top: 12px; line-height: 1.5;">
+        Revisa tu correo — te enviamos un enlace de acceso. Puedes cerrar esta ventana.
+      </div>
+      <button id="loginBtn">Enviar enlace de acceso</button>
       <p style="margin-top: 20px; font-size: 0.75rem; opacity: 0.3;">
         <a href="index.html" style="color: rgba(255,255,255,0.3); text-decoration: none;">← Volver al sitio</a>
       </p>
@@ -44,44 +47,22 @@
 
         <!-- Bienvenida -->
         <div class="portal-card" style="background: var(--charcoal); color: var(--white); border-left: 4px solid var(--gold); margin-bottom: 40px;">
-          <h3 style="color: var(--gold); font-family: var(--font-display);">Bienvenido a tu portal exclusivo</h3>
+          <h3 style="color: var(--gold); font-family: var(--font-display);">Bienvenido<span id="welcomeNames"></span> a tu portal exclusivo</h3>
           <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Aquí encontrarás toda la información de tu evento: cronogramas, documentos, contactos de proveedores y checklists para que todo salga perfecto.</p>
         </div>
 
         <!-- Timeline -->
         <h2 style="margin-top: 60px;">Cronograma de Planificación</h2>
         <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 32px;">Hitos clave desde la confirmación hasta el gran día.</p>
-        <div class="timeline">
-          <div class="timeline-item">
-            <span class="meta">Mes 1-2 · Confirmación</span>
-            <h4>Reserva y Contrato</h4>
-            <p>Firma de contrato, pago de reserva, definición de fecha y locación principal. Asignación de coordinador dedicado.</p>
-          </div>
-          <div class="timeline-item">
-            <span class="meta">Mes 2-3 · Planificación</span>
-            <h4>Definición de Servicios</h4>
-            <p>Selección de proveedores (fotografía, video, banquete, decoración, música). Confirmación de invitados y hospedaje.</p>
-          </div>
-          <div class="timeline-item">
-            <span class="meta">Mes 3-4 · Logística</span>
-            <h4>Coordinación de Viaje</h4>
-            <p>Reserva de vuelos, traslados, cabañas o casas para novios e invitados. Gestión de permisos con Mau Henua si aplica.</p>
-          </div>
-          <div class="timeline-item">
-            <span class="meta">Mes 4-5 · Detalles</span>
-            <h4>Pruebas y Ajustes</h4>
-            <p>Prueba de menú, sesión de fotos previa (opcional), definición de arte y decoración, confirmación de horarios con proveedores.</p>
-          </div>
-          <div class="timeline-item">
-            <span class="meta">Mes 5 · Semana del Evento</span>
-            <h4>Llegada a la Isla</h4>
-            <p>Reunión presencial con coordinador, recorrido de locaciones, bienvenida a invitados, ensayo de ceremonia.</p>
-          </div>
-          <div class="timeline-item">
-            <span class="meta">El Gran Día</span>
-            <h4>¡Tu Boda en Rapa Nui!</h4>
-            <p>Coordinación day-of completa. Nos encargamos de todo para que solo disfrutes.</p>
-          </div>
+        <div class="timeline" id="timelineContainer">
+          <p class="portal-empty-state">Cargando cronograma...</p>
+        </div>
+
+        <!-- Servicios Incluidos -->
+        <h2 style="margin-top: 60px;">Qué Incluye tu Experiencia</h2>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 32px;">Ceremonias, actividades y servicios contratados para tu evento.</p>
+        <div class="portal-card" style="margin-bottom: 40px;">
+          <div id="servicesContainer"><p class="portal-empty-state">Cargando...</p></div>
         </div>
 
         <!-- Document Checklist -->
@@ -91,26 +72,31 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px;">
           <div class="portal-card">
             <h3>📋 Para Ceremonia Civil</h3>
-            <ul>
-              <li>Cédula de identidad o pasaporte vigente (ambos contrayentes)</li>
-              <li>Certificado de nacimiento original (menos de 60 días de emisión)</li>
-              <li>Si hay divorcio: escritura de divorcio inscrita</li>
-              <li>Si hay viudez: certificado de defunción</li>
-              <li>Declaración jurada de testigos (2 testigos, con sus documentos)</li>
-              <li>Compra de hora en el Registro Civil (gestionado por nosotros)</li>
-            </ul>
+            <div id="checklistCivil"><p class="portal-empty-state">Cargando...</p></div>
           </div>
           <div class="portal-card">
             <h3>🌺 Para Ceremonia Ancestral</h3>
-            <ul>
-              <li>No requiere documentos legales (es simbólica)</li>
-              <li>Se puede realizar en locaciones patrimoniales con permiso</li>
-              <li>Permiso Mau Henua para ceremonias en Parque Nacional (gestionado por nosotros)</li>
-              <li>Definición de tipo de ritual: Hanga Tuai o Fantasía Rapa Nui</li>
-              <li>Selección de atuendo: tradicional (mahute, plumas) o moderno</li>
-            </ul>
+            <div id="checklistAncestral"><p class="portal-empty-state">Cargando...</p></div>
           </div>
         </div>
+
+        <!-- Documents -->
+        <h2 style="margin-top: 60px;">Tus Documentos</h2>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 32px;">Contratos, itinerarios y documentos que tu coordinador ha compartido contigo.</p>
+        <div class="portal-card" style="margin-bottom: 40px;">
+          <div id="documentsContainer"><p class="portal-empty-state">Cargando documentos...</p></div>
+        </div>
+
+        <!-- Messages -->
+        <h2 style="margin-top: 60px;">Mensajes con tu Coordinador</h2>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 32px;">Comunícate directamente con tu coordinador asignado.</p>
+        <div class="portal-card" style="margin-bottom: 16px;">
+          <div id="messagesContainer"><p class="portal-empty-state">Cargando mensajes...</p></div>
+        </div>
+        <form id="messageForm" class="contact-form" style="margin-bottom: 40px;">
+          <textarea id="messageBody" placeholder="Escribe tu mensaje..." required></textarea>
+          <button type="submit">Enviar Mensaje</button>
+        </form>
 
         <!-- Vendor Contacts -->
         <h2 style="margin-top: 60px;">Contactos Clave</h2>
@@ -119,30 +105,15 @@
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px;">
           <div class="portal-card">
             <h3>Coordinación</h3>
-            <ul>
-              <li>Coordinador asignado: [Nombre]</li>
-              <li>Teléfono: +56 9 XXXX XXXX</li>
-              <li>Email: coordinacion@discoverrapanui.cl</li>
-              <li>WhatsApp: disponible 9:00-20:00</li>
-            </ul>
+            <div id="vendorCoordinacion"><p class="portal-empty-state">Cargando...</p></div>
           </div>
           <div class="portal-card">
             <h3>Proveedores Aliados</h3>
-            <ul>
-              <li>Fotografía: [Nombre estudio]</li>
-              <li>Banquetería: [Nombre servicio]</li>
-              <li>Música: [Grupo/Artista]</li>
-              <li>Flores: [Taller local]</li>
-            </ul>
+            <div id="vendorProveedores"><p class="portal-empty-state">Cargando...</p></div>
           </div>
           <div class="portal-card">
             <h3>Emergencias</h3>
-            <ul>
-              <li>Hospital Hanga Roa: +56 32 210 0XXX</li>
-              <li>Carabineros: 133</li>
-              <li>Bomberos: 132</li>
-              <li>Aeropuerto Mataveri: +56 32 210 XXXX</li>
-            </ul>
+            <div id="vendorEmergencias"><p class="portal-empty-state">Cargando...</p></div>
           </div>
         </div>
 
@@ -151,15 +122,8 @@
         <div class="checklist-grid" style="margin-bottom: 40px;">
           <div class="portal-card">
             <h3>✅ Checklist de Viaje</h3>
-            <div style="margin-top: 12px;">
-              <label class="checklist-item"><input type="checkbox"> Pasaportes vigentes</label>
-              <label class="checklist-item"><input type="checkbox"> Vuelos reservados (SCL → IPC)</label>
-              <label class="checklist-item"><input type="checkbox"> Seguro de viaje contratado</label>
-              <label class="checklist-item"><input type="checkbox"> Alojamiento confirmado</label>
-              <label class="checklist-item"><input type="checkbox"> Ropa adecuada (formal + cómoda)</label>
-              <label class="checklist-item"><input type="checkbox"> Repelente y bloqueador solar</label>
-              <label class="checklist-item"><input type="checkbox"> Efectivo (CLP) — la isla tiene pocos ATM</label>
-              <label class="checklist-item"><input type="checkbox"> Documentos de ceremonia listos</label>
+            <div style="margin-top: 12px;" id="checklistViaje">
+              <p class="portal-empty-state">Cargando...</p>
             </div>
           </div>
           <div class="portal-card">
@@ -193,6 +157,7 @@
 
   </div>
 
-  <script src="assets/js/portal.js"></script>
+  <script type="module" src="assets/js/portal.js"></script>
+  <script type="module" src="assets/js/portal-data.js"></script>
 </body>
 </html>
