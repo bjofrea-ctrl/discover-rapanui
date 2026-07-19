@@ -68,6 +68,20 @@ Mensajes clave a reforzar en la landing y el portal:
 - Tiempo de respuesta a leads (objetivo: <24h, automatizable con notificación del backend).
 - % de clientes que usan el portal activamente (proxy de percepción de valor/diferenciación).
 
+### A.5 Instrumentación del funnel y SLA de respuesta
+
+El portal no debe tratarse como "área privada" sino como argumento de venta — se puede mostrar en demo a leads calificados antes de contratar, posicionado como un **"luxury planning workspace"** (no un simple "portal de cliente"), reforzando el diferenciador del ítem A.3.7.
+
+Funnel comercial con 5 etapas nombradas, ya soportadas técnicamente por los `status` existentes:
+
+1. Lead recibido (`leads.status = 'nuevo'`)
+2. Lead respondido (`leads.status = 'contactado'`)
+3. Cotización enviada (`leads.status = 'cotizado'`)
+4. Contrato firmado (`leads.status = 'ganado'` → `events.status = 'contratado'`)
+5. Evento activo (`events.status = 'planificacion'`/`'completado'`)
+
+Falta solo visualizar esto como embudo en el admin (candidato a Fase 3/4 del dashboard). Junto con esto, definir y **comunicar activamente** un SLA de respuesta a leads (ej. "respondemos en menos de 24h") como parte de la propuesta de valor, no solo como métrica interna a medir pasivamente.
+
 ---
 
 ## Parte B — Backend y Portal "Nivel Dios" (arquitectura técnica)
@@ -162,7 +176,7 @@ Costos futuros opcionales: WhatsApp Business API, Stripe.
 | **Fase 0** | Rangos de precio públicos; mensajes de posicionamiento | Proyecto Supabase + schema; `submit-lead` + Resend; magic link; deploy |
 | **Fase 1 — MVP** | Botón WhatsApp; contenido Instagram "de proceso" | Modelo de datos completo + RLS; portal con datos reales; admin Fase 1 |
 | **Fase 2** | Referidos con proveedores; "experiencia multi-día"; SEO bilingüe | Mensajería; plantillas reutilizables |
-| **Fase 3** (futuro) | Alianza Ma'u Henua; línea B2B | Dashboard más rico; pagos (Stripe); WhatsApp Business API; evaluar InsForge como capa de IA |
+| **Fase 3** (futuro) | Alianza Ma'u Henua; línea B2B | Dashboard más rico; pagos (Stripe); WhatsApp Business API; evaluar InsForge como capa de IA; backoffice analítico de proveedores (márgenes, tiempos, performance) |
 
 ---
 
@@ -200,7 +214,26 @@ Se investigó InsForge (BaaS open-source "agent-native": Postgres, Auth, Storage
 - **Precio prácticamente idéntico** a Supabase en los tiers relevantes — no es un diferenciador de costo.
 - **RLS + Postgres + JWT**: mismo paradigma conceptual que Supabase, pero con SDK propio (`@insforge/sdk`, no compatible como reemplazo directo de `supabase-js`) — migrar implicaría reescribir todo el código ya construido y verificado, no solo cambiar credenciales.
 - **Plataforma más nueva y con menor trayectoria** que Supabase (algunas piezas, como "Compute", en preview privado).
-- **Decisión**: no migrar el core ya construido. Sí evaluar InsForge más adelante (Fase 3) como capa adicional específica de IA — concierge en el portal, triage de leads, búsqueda semántica sobre contenido de Instagram — sin exponer los datos transaccionales críticos (auth, documentos, pagos) a una plataforma menos probada. La razón central: usar InsForge solo para IA es una feature opcional que puede fallar sin tumbar el negocio; usar InsForge para todo apuesta la operación completa a una plataforma con mucho menos track record.
+- **Decisión**: no migrar el core ya construido. Sí evaluar InsForge más adelante (Fase 3) como capa adicional específica de IA, sin exponer los datos transaccionales críticos (auth, documentos, pagos) a una plataforma menos probada. La razón central: usar InsForge solo para IA es una feature opcional que puede fallar sin tumbar el negocio; usar InsForge para todo apuesta la operación completa a una plataforma con mucho menos track record.
+- **Actualización**: el usuario ya creó cuentas reales de Supabase e InsForge. Esto no cambia la decisión de arquitectura — elimina fricción de setup para cuando se llegue a Fase 3, pero no adelanta la secuencia (operación real primero, IA después).
+
+Casos de uso de IA (Fase 3, vía InsForge Model Gateway) priorizados por valor/riesgo:
+1. **Concierge en el portal**: responde preguntas frecuentes sobre planes, documentos, tiempos, tours y logística.
+2. **Triage de leads**: clasifica presupuesto, idioma, urgencia, tipo de evento y probabilidad de cierre.
+3. **Búsqueda semántica** sobre contenido comercial, testimonios, FAQs y material de Instagram (pgvector + embeddings).
+4. **Copiloto interno para el admin** (distinto del concierge de cara al cliente): ayuda a redactar respuestas a leads, proponer itinerarios y sugerir próximos pasos por evento — acelera al coordinador sin tocar procesos críticos financieros.
+
+---
+
+## Riesgos a evitar
+
+Los principales riesgos de este proyecto no son técnicos, sino estratégicos/de disciplina de ejecución:
+
+- **Sobreingeniería temprana**: agregar demasiadas piezas (IA, integraciones, plataformas nuevas) antes de tener operación real, tráfico y datos.
+- **Tratar el portal como módulo secundario** en vez de argumento de venta central — es parte del posicionamiento premium, no solo un "área privada" técnica.
+- **Meter IA demasiado pronto**, sin tráfico ni proceso comercial definido — primero revenue y operación, después búsqueda semántica y concierge, recién después automatizaciones más profundas.
+- **Competir por precio** en vez de sostener la propuesta boutique/premium — el modelo tiene sentido como operación de pocos eventos por temporada y ticket alto, no de volumen.
+- **Comunicar solo estética** (fotos bonitas) y no el verdadero valor diferencial: tranquilidad, claridad, control y experiencia guiada de principio a fin.
 
 ---
 
