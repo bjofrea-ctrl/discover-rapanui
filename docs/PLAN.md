@@ -237,6 +237,31 @@ Los principales riesgos de este proyecto no son técnicos, sino estratégicos/de
 
 ---
 
+## Parte I — División de trabajo: OpenCode implementa, Claude Code audita
+
+Todo lo que dependía de código ya está construido y mergeado a `main` (schema con RLS, Edge Functions, admin, portal, presupuesto/servicios/contabilidad, mensajería/documentos/plantillas, fixes visuales). Lo que queda son pasos de **cuentas reales y credenciales** (ver "Pendientes" abajo) que este entorno no puede ejecutar por no tener acceso a las cuentas del usuario. Esa parte la ejecuta **OpenCode**, corriendo en el Mac del usuario con acceso a browser/terminal/CLI y credenciales reales. El rol de Claude Code pasa a **auditor**: revisar cada cambio que OpenCode empuje al repo contra los patrones de seguridad ya establecidos y el checklist de verificación end-to-end.
+
+**Tareas para OpenCode (orden secuencial):**
+
+| # | Tarea | Entregable verificable |
+|---|---|---|
+| 1 | Crear proyecto Supabase real | URL + anon key + project ref |
+| 2 | Ejecutar migraciones `0001_init.sql` y `0002_budget_services_finance.sql` | Tablas y policies visibles en Table Editor |
+| 3 | Habilitar Auth por magic link + redirect URL de `portal.html` | Login de prueba llega el email |
+| 4 | Deploy de Edge Functions `submit-lead`/`invite-client` + secrets | `supabase functions list` muestra ambas activas |
+| 5 | Cuenta Resend, verificar dominio, generar API key | Email de prueba recibido |
+| 6 | Completar `frontend/assets/js/config.js` con credenciales reales (nunca la `service_role key`) | Sitio local sin warning de consola |
+| 7 | Probar el flujo completo siguiendo el checklist de "Verificación end-to-end" (abajo) | Cada ítem pasa |
+| 8 | Deploy del sitio a Cloudflare Pages o Netlify | URL pública funcionando |
+| 9 | Upgrade a Supabase Pro antes del primer cliente real | Sin auto-pausa a 7 días |
+| 10 | Reemplazar el placeholder del número de WhatsApp Business | Botón abre chat real |
+
+**Restricciones para OpenCode**: no tocar `style.css` ni la estructura HTML existente; nunca commitear la `service_role key` ni secrets en el repo; no reescribir `0001`/`0002` (migración nueva `0003_...` si hace falta un cambio); no adelantar la Fase 3 de IA/InsForge.
+
+**Rol de auditoría (Claude Code)**: tras cada bloque de tareas, revisar el diff en `main` (secrets expuestos, cambios no autorizados a RLS/migraciones/diseño), verificar estáticamente y con Playwright cuando el sitio esté público, marcar en este documento qué ítems de "Pendientes" quedaron resueltos, y reportar un resumen con cualquier riesgo encontrado antes de avanzar a la siguiente tarea.
+
+---
+
 ## Pendientes (dependen del usuario, no de código)
 
 1. Crear proyecto Supabase real y ejecutar las migraciones (`backend/SETUP.md`).
