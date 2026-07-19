@@ -1,0 +1,24 @@
+{
+  "name": "discover-rapanui-frontend",
+  "version": "1.0.0",
+  "description": "Discover Rapa Nui - Landing page and client portal",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8080",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:update-snapshots": "playwright test --update-snapshots",
+    "optimize-images": "python3 ../scripts/optimize-images.py",
+    "lint": "echo 'No linter configured'",
+    "format": "echo 'No formatter configured'"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
