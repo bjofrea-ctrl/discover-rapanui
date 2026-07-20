@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 *.pyc
 __pycache__/
+frontend/playwright-report/
+frontend/test-results/
