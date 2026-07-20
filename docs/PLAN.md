@@ -260,17 +260,30 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 
 **Rol de auditoría (Claude Code)**: tras cada bloque de tareas, revisar el diff en `main` (secrets expuestos, cambios no autorizados a RLS/migraciones/diseño), verificar estáticamente y con Playwright cuando el sitio esté público, marcar en este documento qué ítems de "Pendientes" quedaron resueltos, y reportar un resumen con cualquier riesgo encontrado antes de avanzar a la siguiente tarea.
 
+### Auditoría round 1 (commits `0822802`…`978f6fc` de OpenCode)
+
+- ✅ Tareas 1, 2, 5, 6 completadas correctamente. `config.js` solo tiene la anon key pública (verificado decodificando el JWT: `"role":"anon"`), sin `service_role` expuesta.
+- 🔴 **Crítico, en curso**: el admin quedó marcado admin solo en una tabla nueva `user_roles` (migraciones 0003-0005), desconectada del sistema real de roles (`profiles.role` + `is_admin()`) del que dependen TODAS las policies RLS admin-only. Sin el fix, el admin podía loguearse pero el panel le mostraba todo vacío. Entre la primera y la segunda ronda de auditoría, OpenCode cambió el email de admin (`0006_admin_email.sql`, commit `eacca5d`) — pero ese cambio también escribe solo en `user_roles`, así que el bug persiste con el email nuevo. Migración `0007_fix_admin_profile_role.sql` corrige `profiles.role` para `contacto@discoverrapanui.cl` (y limpia el email viejo) — falta que se ejecute contra la base real (ver Pendientes).
+- 🟡 0004 tenía una policy RLS recursiva clásica de Postgres sobre `user_roles`, corregida en 0005 quitándola — indica que hubo un incidente real en producción, sin daño de seguridad (quedó más restrictivo, no más permisivo).
+- 🟡 **Tarea 8 (deploy) NO está funcionando**: los 3 workflow runs de "Deploy to Cloudflare Pages" hasta ahora fallaron, incluido el de después del fix. Causa: `Headers.append: "***" is an invalid header value` — típico de un secret `CLOUDFLARE_API_TOKEN` con salto de línea o comillas de más al pegarlo en GitHub. El sitio **todavía no está publicado**. Acción pendiente del usuario/OpenCode: regenerar el secret en GitHub (Settings → Secrets → Actions) pegando el token limpio, sin espacios ni saltos de línea.
+- 🟡 Se detectó un `frontend-preview/` (con mejoras de SEO/Open Graph no presentes en `frontend/`) y un set completo de imágenes optimizadas (avif/webp) en `frontend/assets/images/optimized/` que `index.html` no referencia — trabajo generado pero no conectado al sitio real. Pendiente de decisión: promover a `frontend/` o descartar.
+- 🟡 Se dejó de trackear (`.gitignore` + `git rm --cached`) `frontend/playwright-report/` y `frontend/test-results/`, que habían quedado commiteados por error (varios MB de video/capturas). El propio test suite reportó 6 casos E2E fallando al momento del commit — no se investigaron.
+- ℹ️ Se duplicó `backend/supabase/` en un nuevo `supabase/` en la raíz (contenido de 0001/0002 idéntico, verificado) porque el CLI de Supabase espera esa carpeta ahí. Las migraciones nuevas (0003-0006) solo existen en la copia nueva — `backend/supabase/` quedó desactualizado. Pendiente: elegir una sola fuente de verdad.
+
 ---
 
 ## Pendientes (dependen del usuario, no de código)
 
-1. Crear proyecto Supabase real y ejecutar las migraciones (`backend/SETUP.md`).
-2. Cuenta Resend + configurar secrets de las Edge Functions.
-3. Completar `frontend/assets/js/config.js` con credenciales reales.
-4. Deploy del sitio a Cloudflare Pages o Netlify (hoy no está publicado en internet).
-5. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
-6. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
-7. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
+1. ~~Crear proyecto Supabase real y ejecutar las migraciones~~ — hecho por OpenCode.
+2. ~~Cuenta Resend + configurar secrets de las Edge Functions~~ — hecho por OpenCode.
+3. ~~Completar `frontend/assets/js/config.js` con credenciales reales~~ — hecho por OpenCode, verificado seguro.
+4. **Ejecutar la migración `supabase/migrations/0007_fix_admin_profile_role.sql` contra la base real** (Supabase Dashboard → SQL Editor) — sin esto el admin (`contacto@discoverrapanui.cl`) sigue sin poder ver datos en el panel, sin importar qué se haga en `user_roles`.
+5. **Corregir el secret `CLOUDFLARE_API_TOKEN` en GitHub** (Settings → Secrets and variables → Actions) — los 3 deploys hasta ahora fallaron por un header inválido (probablemente el token tiene un salto de línea o comillas de más). El sitio aún no está publicado.
+6. Decidir qué hacer con `frontend-preview/` (mejoras SEO/Open Graph no aplicadas) y `frontend/assets/images/optimized/` (imágenes optimizadas no referenciadas) — promoverlas a `frontend/` o descartarlas.
+7. Consolidar `backend/supabase/` y `supabase/` (raíz) en una sola fuente de verdad de migraciones.
+8. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
+9. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
+10. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
 
 ## Verificación end-to-end (una vez conectado el backend real)
 
