@@ -17,35 +17,37 @@
   <meta name="twitter:title" content="Discover Rapa Nui — Bodas Destino y Experiencias Premium">
   <meta name="twitter:description" content="Organizamos tu boda o evento ideal en Rapa Nui. Experiencias premium, ceremonias ancestrales, tours y hospedaje boutique.">
   <link rel="canonical" href="https://discoverrapanui.cl">
+<<<<<<< HEAD
+=======
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🗿</text></svg>">
 </head>
 <body>
 
   <!-- Loader -->
-  <div class="loader" id="loader">
+  <div class="loader" id="loader" role="status" aria-label="Cargando">
     <div class="loader-ring"></div>
     <span>Discover Rapa Nui</span>
   </div>
 
   <!-- Navigation -->
-  <nav id="nav">
-    <a href="#" class="logo">Discover<span>.</span>Rapa Nui</a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="#about">Historia</a></li>
-      <li><a href="#plans">Planes</a></li>
-      <li><a href="#tours">Tours</a></li>
-      <li><a href="#cabanas">Cabañas</a></li>
-      <li><a href="#gallery">Galería</a></li>
-      <li><a href="#contact">Contacto</a></li>
-      <li><a href="portal.html" class="nav-cta">Acceso Clientes</a></li>
+  <nav id="nav" aria-label="Menú principal">
+    <a href="#" class="logo" aria-label="Discover Rapa Nui, volver al inicio">Discover<span>.</span>Rapa Nui</a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú de navegación" aria-expanded="false">☰</button>
+    <ul class="nav-links" id="navLinks" role="menubar">
+      <li role="none"><a href="#about" role="menuitem">Historia</a></li>
+      <li role="none"><a href="#plans" role="menuitem">Planes</a></li>
+      <li role="none"><a href="#tours" role="menuitem">Tours</a></li>
+      <li role="none"><a href="#cabanas" role="menuitem">Cabañas</a></li>
+      <li role="none"><a href="#gallery" role="menuitem">Galería</a></li>
+      <li role="none"><a href="#contact" role="menuitem">Contacto</a></li>
+      <li role="none"><a href="portal.html" class="nav-cta" role="menuitem">Acceso Clientes</a></li>
     </ul>
   </nav>
 
   <!-- Hero -->
-  <section class="hero">
-    <div class="hero-bg" style="background-image: url('assets/images/hero.jpg');"></div>
+  <section class="hero" aria-label="Hero principal">
+    <div class="hero-bg" style="background-image: url('assets/images/hero.jpg');" role="img" aria-label="Paisaje de Rapa Nui con Moai al atardecer"></div>
     <div class="hero-content">
       <div class="subtitle">Bodas Destino · Experiencias · Rapa Nui</div>
       <h1>El lugar donde el<br>amor <em>toca la eternidad</em></h1>
@@ -55,15 +57,15 @@
         <a href="#contact" class="btn-outline">Solicitar Información</a>
       </div>
     </div>
-    <div class="hero-scroll">
+    <div class="hero-scroll" aria-hidden="true">
       <span>Descubre</span>
       <div class="scroll-line"></div>
     </div>
   </section>
 
   <!-- About -->
-  <section class="about" id="about">
-    <div class="about-image" style="background-image: url('assets/images/hero2.jpg');"></div>
+  <section class="about" id="about" aria-label="Quiénes somos">
+    <div class="about-image" style="background-image: url('assets/images/hero2.jpg');" role="img" aria-label="Equipo Discover Rapa Nui"></div>
     <div class="about-text">
       <div class="section-label">Quiénes Somos</div>
       <h2 class="section-title">Más de 15 años creando momentos únicos en la isla</h2>
@@ -88,7 +90,7 @@
   </section>
 
   <!-- Plans -->
-  <section class="plans" id="plans">
+  <section class="plans" id="plans" aria-label="Planes de boda">
     <div class="container text-center">
       <div class="section-label reveal">Planes de Boda</div>
       <h2 class="section-title reveal reveal-delay-1">Elige la experiencia que resuene con ustedes</h2>
@@ -140,7 +142,7 @@
   </section>
 
   <!-- Tours -->
-  <section class="tours" id="tours">
+  <section class="tours" id="tours" aria-label="Tours y experiencias">
     <div class="container text-center">
       <div class="section-label reveal">Experiencias</div>
       <h2 class="section-title reveal reveal-delay-1">Tours y Actividades en Rapa Nui</h2>
