@@ -298,11 +298,12 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 5. Confirmar en Supabase Dashboard que `0007`/`0008` (fix de `profiles.role='admin'`) ya corrieron contra la base real.
 6. ~~Decidir qué hacer con `frontend-preview/`~~ — resuelto: era código viejo/regresivo, se eliminó; se rescataron las etiquetas SEO seguras.
 7. ~~Consolidar `backend/supabase/` y `supabase/`~~ — resuelto: `supabase/` (raíz) es la única fuente de verdad.
-7b. Wirear `frontend/assets/images/optimized/` (avif/webp) en `index.html` — pendiente, requiere su propia pasada con verificación visual.
+7b. ~~Wirear `frontend/assets/images/optimized/` en `index.html`~~ — resuelto: se agregó `srcset`/`sizes` (tiers xs/sm/md en JPG) a los 14 `<img>` de las secciones Tours y Galería, verificado sin 404s y con Playwright (desktop + mobile). Se dejaron fuera los fondos `background-image` (hero, about, cabañas) porque migrarlos a `<picture>` requeriría cambios de CSS — evaluar en una pasada aparte si vale la pena. También se dejaron fuera `avif`/`webp` (habría requerido `<picture>` con `<source>` por formato); el srcset actual ya reduce bastante el peso en mobile solo con JPG por tamaño.
 8. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
 9. Confirmar el dominio final (`discoverrapanui.cl` u otro) para actualizar `og:url`/`canonical` en `index.html` una vez esté configurado.
-9. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
-10. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
+10. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
+11. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía.
+12. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
 
 ## Verificación end-to-end (una vez conectado el backend real)
 
