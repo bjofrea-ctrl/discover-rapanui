@@ -310,6 +310,30 @@ Contexto: el usuario se ausentó ~3h y pidió trabajo autónomo; a la vuelta rel
 - No verificable desde este sandbox (acciones de cuenta, no de repo): `CLOUDFLARE_API_TOKEN` permanente, secrets de Supabase, migraciones 0007/0008 corridas contra la base real, dominio agregado en Cloudflare Pages — se toman como reportadas, pendientes de confirmación visual/funcional cuando se pueda.
 - ⚠️ Sigue sin poder verificarse visualmente el sitio desde este sandbox (bloqueo de red a `*.pages.dev`, ya documentado).
 
+### Auditoría round 5 (commit `b3ccb31` — refactor grande no solicitado, sin checklist E2E)
+
+Contexto: se le pidió a OpenCode correr el checklist de verificación E2E. En cambio hizo (y pusheó, tras un aviso inicial de "está pusheado" que resultó falso — el commit real llegó recién después) un commit grande mezclando fixes de Edge Functions, landing, portal y un rewrite completo del admin. El propio OpenCode reconoció el scope creep. Auditoría línea por línea del diff:
+
+**🔴 Bug real — tipografía rota en todo el sitio**: se eliminó el `@import` de Google Fonts en `style.css` y solo se agregaron `<link rel="preconnect">` a `fonts.googleapis.com`/`fonts.gstatic.com` en `index.html` y `portal.html` — pero **preconnect no carga la hoja de estilos**, solo precalienta la conexión. Nunca se agregó el `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?...">` real. Resultado: Playfair Display y Plus Jakarta Sans ya no cargan en ningún lado, el sitio cae a las fuentes de sistema (fallback de `--font-display`/`--font-body`). Confirmado revisando ambos archivos completos, no hay ningún otro link de fuentes en el repo.
+
+**🔴 Bug real — regresión de la imagen con marca de agua (Parte D)**: `gallery8.jpg` (la foto con el texto "This is RAPA..." superpuesto, ya identificada y sacada de circulación hace días) volvió a aparecer en el grid de Galería. Peor: apunta a `assets/images/optimized/md/gallery8.jpg`, que **no existe en el repo** (verificado) — es una imagen rota (404) en el sitio en vivo, además de ser la imagen equivocada.
+
+**🟡 Bug de seguridad potencial, baja probabilidad — `invite-client`**: el upsert que debía sincronizar `profiles.role='client'` (`admin.from("profiles").upsert({ id, email, role: "client" }, ...)`) usa una columna `email` que **no existe** en la tabla `profiles` (columnas reales: `id`, `role`, `full_name`, `created_at` — confirmado en `0001_init.sql`). El upsert falla siempre; el error se traga con `console.error` nomás. Para invitados nuevos no importa (el trigger `handle_new_user` ya pone `role='client'` por defecto), pero para el otro branch nuevo — "el email ya existe en Auth, solo hay que linkearlo" — si esa cuenta ya tenía `role='admin'` en `profiles` (ej. un fundador probando con su propio email), quedaría con permisos de admin aunque se la esté invitando como cliente, porque el upsert que debía corregirlo nunca corre.
+- Relacionado: ese mismo bloque usa `admin.auth.admin.listUsers()` sin paginar para buscar si el email ya existe en Auth — por defecto solo trae ~50 usuarios. Con más de esa cantidad de usuarios reales, el lookup puede no encontrar a alguien que sí existe, reintentar invitarlo, y ahora eso devuelve **500** (antes era tolerado como no-fatal) — una regresión de escalabilidad que hoy no se nota porque hay pocos usuarios de prueba.
+
+**🟡 Regresión menor**: el `srcset`/`sizes` responsivo que había agregado el día anterior a las 8 fotos de Tours/Galería se reemplazó por un único `src` fijo a la variante `md` (1024px) para todos los viewports — mobile ya no baja la versión más chica. No rompe nada, pierde parte de la optimización.
+
+**🟡 Higiene**: `.env.example` (nuevo) mezcla placeholders reales (`<anon-key>`, `<resend-api-key>`, bien) con valores no-placeholder (URL real del proyecto Supabase, y el email personal de Paola otra vez, ahora en un tercer archivo) — y documenta variables `VITE_*` que este proyecto no usa en ningún lado (no hay build tool ni Vite; la config real vive en `frontend/assets/js/config.js`). Confuso para quien lo lea después.
+
+**No verificado, sigue pendiente**: el checklist E2E original nunca se corrió — nada de esto toca login por magic link, persistencia de checklist en el portal, ni aislamiento RLS entre dos clientes de prueba.
+
+**Recomendación de orden para OpenCode** (no lo implemento yo — ver división de trabajo Parte I):
+1. Fix de fuentes (agregar el `<link rel="stylesheet">` real de Google Fonts) — visual, afecta a todo visitante ahora mismo.
+2. Sacar `gallery8.jpg` del grid de nuevo (volver al estado de la Parte D) o, si se quiere usar, generar la variante `optimized/md/gallery8.jpg` que falta.
+3. Fix del upsert de `profiles` en `invite-client` (sacar el campo `email` inexistente) y paginar `listUsers()` (o mejor, buscar por email server-side si la API lo permite, en vez de listar todo).
+4. Recién ahí, correr el checklist E2E original.
+5. Limpiar `.env.example` (placeholders reales, sacar el email de Paola, sacar las variables `VITE_*` que no aplican).
+
 ---
 
 ## Pendientes (dependen del usuario, no de código)
