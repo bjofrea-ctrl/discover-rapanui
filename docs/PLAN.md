@@ -279,6 +279,14 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 - ⚠️ No pude confirmar visualmente que el sitio publicado se ve bien — la política de red de este sandbox bloquea `*.pages.dev` (mismo bloqueo que ya afectó `developers.cloudflare.com` antes). Verificación visual pendiente de un vistazo directo del usuario.
 - Pendientes de rondas anteriores sin cambios: `frontend-preview/`/imágenes optimizadas sin conectar, duplicación `backend/supabase/` vs `supabase/`, número de WhatsApp, upgrade a Supabase Pro.
 
+### Limpieza directa (Claude Code, sin pasar por OpenCode — cambios de código puro, sin cuentas/credenciales de por medio)
+
+- ✅ **Corrección a un hallazgo anterior**: audité `frontend-preview/` a fondo y **no era "mejoras sin aplicar"** como reporté antes — es una copia vieja, **anterior** a toda la integración del backend real (su `main.js` no tiene `fetch` ni importa `CONFIG`, es el simulador falso de antes de la Parte B; su formulario de contacto no tiene atributos `name=` que el backend real necesita; le falta el fix del bug de la imagen con marca de agua de la Parte D; y no tiene el botón de WhatsApp ni los rangos de precio públicos ya implementados). Promoverla habría sido un retroceso grave. La eliminé del repo.
+- ✅ Rescaté lo único genuinamente seguro y nuevo de ahí — las etiquetas Open Graph/Twitter Card y el `canonical` — y las agregué a `frontend/index.html` (el que sí se despliega). Corregí `og:image` para apuntar a `hero.jpg` (la versión original apuntaba a un archivo `og-image.jpg` que no existe en el repo — habría quedado roto al compartir el link en redes).
+- ✅ Consolidé las migraciones: eliminé `backend/supabase/` (contenido idéntico a `supabase/migrations/0001` y `0002`, verificado byte a byte, y ya desactualizado frente a las migraciones 0003-0008 que solo existían en la copia nueva). `supabase/` en la raíz queda como única fuente de verdad, que es además la que usa el CLI de Supabase por convención. Actualicé las rutas en `backend/SETUP.md`.
+- Nota: los `og:url`/`canonical` apuntan a `https://discoverrapanui.cl` — hay que confirmar que ese sea el dominio final una vez que se configure (hoy el sitio vive en `https://ca726c4a.discover-rapanui.pages.dev`).
+- Queda pendiente, sin tocar todavía: `frontend/assets/images/optimized/` (imágenes avif/webp generadas por `scripts/optimize-images.py` pero no referenciadas en `index.html`) — wirearlas implica reescribir todas las etiquetas `<img>`/`background-image` a `<picture>`/`srcset`, un cambio más grande que merece su propia pasada con verificación visual, no bundleado en esta limpieza.
+
 ---
 
 ## Pendientes (dependen del usuario, no de código)
@@ -288,9 +296,11 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 3. ~~Completar `frontend/assets/js/config.js` con credenciales reales~~ — hecho por OpenCode, verificado seguro.
 4. ~~Deploy del sitio~~ — hecho por OpenCode, verificado en el log del workflow: https://ca726c4a.discover-rapanui.pages.dev (pendiente que el usuario le eche un ojo visual, este sandbox no tiene acceso de red a `*.pages.dev`).
 5. Confirmar en Supabase Dashboard que `0007`/`0008` (fix de `profiles.role='admin'`) ya corrieron contra la base real.
-6. Decidir qué hacer con `frontend-preview/` (mejoras SEO/Open Graph no aplicadas) y `frontend/assets/images/optimized/` (imágenes optimizadas no referenciadas) — promoverlas a `frontend/` o descartarlas.
-7. Consolidar `backend/supabase/` y `supabase/` (raíz) en una sola fuente de verdad de migraciones.
+6. ~~Decidir qué hacer con `frontend-preview/`~~ — resuelto: era código viejo/regresivo, se eliminó; se rescataron las etiquetas SEO seguras.
+7. ~~Consolidar `backend/supabase/` y `supabase/`~~ — resuelto: `supabase/` (raíz) es la única fuente de verdad.
+7b. Wirear `frontend/assets/images/optimized/` (avif/webp) en `index.html` — pendiente, requiere su propia pasada con verificación visual.
 8. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
+9. Confirmar el dominio final (`discoverrapanui.cl` u otro) para actualizar `og:url`/`canonical` en `index.html` una vez esté configurado.
 9. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
 10. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
 

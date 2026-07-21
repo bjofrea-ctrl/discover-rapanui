@@ -22,11 +22,12 @@ los dashboards web.
 ## 2. Ejecutar la migración SQL
 
 1. Ve a **SQL Editor** en el dashboard de Supabase.
-2. Abre `backend/supabase/migrations/0001_init.sql` de este repo, copia todo el contenido, pégalo en el SQL Editor y ejecútalo (▶ Run). Es idempotente, se puede re-ejecutar sin problema.
+2. Abre `supabase/migrations/0001_init.sql` de este repo, copia todo el contenido, pégalo en el SQL Editor y ejecútalo (▶ Run). Es idempotente, se puede re-ejecutar sin problema.
 3. Verifica en **Table Editor** que aparecieron las tablas: `profiles`, `leads`, `clients`, `events`, `event_milestones`, `checklist_items`, `vendor_contacts`, `documents`, `messages`, `milestone_templates`, `checklist_templates`.
 4. Verifica en **Storage** que existe el bucket privado `event-documents`.
-5. Ejecuta también `backend/supabase/migrations/0002_budget_services_finance.sql` (mismo procedimiento: pegar en el SQL Editor y correr). Agrega presupuesto por evento, el listado de actividades/servicios incluidos (`event_services`) y el módulo de contabilidad (`finance_transactions`, `finance_imports`).
+5. Ejecuta también `supabase/migrations/0002_budget_services_finance.sql` (mismo procedimiento: pegar en el SQL Editor y correr). Agrega presupuesto por evento, el listado de actividades/servicios incluidos (`event_services`) y el módulo de contabilidad (`finance_transactions`, `finance_imports`).
 6. Verifica en **Storage** que también existe el bucket privado `finance-imports`.
+7. Ejecuta en orden el resto de migraciones en `supabase/migrations/` (0003 a la más reciente) — cubren ajustes de roles/RLS. Todas son idempotentes.
 
 ### Formato del Excel para importar movimientos contables
 
