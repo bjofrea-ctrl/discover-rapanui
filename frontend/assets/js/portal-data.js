@@ -100,12 +100,19 @@ async function renderDocuments(container, documents) {
     setEmpty(container, 'Tu coordinador aún no ha compartido documentos.');
     return;
   }
-  const links = await Promise.all(documents.map(async (doc) => {
+  const results = await Promise.allSettled(documents.map(async (doc) => {
     const { data } = await supabase.storage
       .from('event-documents')
       .createSignedUrl(doc.storage_path, 60 * 60);
     return { doc, url: data?.signedUrl || '#' };
   }));
+  const links = results
+    .filter((r) => r.status === 'fulfilled')
+    .map((r) => r.value);
+  if (links.length === 0) {
+    setEmpty(container, 'Error al cargar documentos. Intenta de nuevo más tarde.');
+    return;
+  }
   container.innerHTML = `<ul>${links.map(({ doc, url }) => `
     <li><a href="${url}" target="_blank" rel="noopener">${escapeHtml(doc.filename)}</a> <small>(${escapeHtml(doc.category)})</small></li>
   `).join('')}</ul>`;
@@ -147,15 +154,31 @@ function renderMessages(container, messages) {
   `).join('');
 }
 
+let messagesPollId = null;
+
 async function loadMessages() {
+  if (!currentEventId) return;
   const container = document.getElementById('messagesContainer');
   const { data, error } = await supabase
     .from('messages')
     .select('*')
     .eq('event_id', currentEventId)
     .order('created_at', { ascending: true });
-  if (error) { setEmpty(container, 'Error cargando mensajes.'); return; }
+  if (error) { console.error('load messages failed', error); return; }
   renderMessages(container, data);
+}
+
+function startMessagesPoll() {
+  stopMessagesPoll();
+  loadMessages();
+  messagesPollId = setInterval(loadMessages, 30000);
+}
+
+function stopMessagesPoll() {
+  if (messagesPollId) {
+    clearInterval(messagesPollId);
+    messagesPollId = null;
+  }
 }
 
 document.getElementById('messageForm').addEventListener('submit', async (e) => {
@@ -174,7 +197,7 @@ document.getElementById('messageForm').addEventListener('submit', async (e) => {
     return;
   }
   bodyInput.value = '';
-  loadMessages();
+  loadMessages(); // refresh inmediato, no esperar poll
 });
 
 async function loadAndRender(session) {
@@ -220,7 +243,7 @@ async function loadAndRender(session) {
     supabase.from('event_services').select('*').eq('event_id', event.id).order('scheduled_date', { ascending: true, nullsFirst: false }),
   ]);
 
-  await loadMessages();
+  startMessagesPoll();
 
   renderTimeline(document.getElementById('timelineContainer'), milestonesRes.data);
   renderServices(document.getElementById('servicesContainer'), servicesRes.data);

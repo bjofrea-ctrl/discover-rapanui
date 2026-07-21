@@ -2,9 +2,14 @@ import { CONFIG } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Loader
+  // Loader with min 400ms to prevent flash on fast connections
   const loader = document.getElementById('loader');
-  setTimeout(() => loader.classList.add('hidden'), 1200);
+  const loaderStart = Date.now();
+  window.addEventListener('load', () => {
+    const elapsed = Date.now() - loaderStart;
+    const delay = Math.max(0, 400 - elapsed);
+    setTimeout(() => loader.classList.add('hidden'), delay);
+  });
 
   // Nav scroll effect
   const nav = document.getElementById('nav');
@@ -17,14 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.getElementById('navLinks');
   menuToggle.addEventListener('click', () => {
     const isOpen = navLinks.classList.toggle('open');
-    menuToggle.textContent = isOpen ? '✕' : '☰';
     menuToggle.setAttribute('aria-expanded', isOpen);
     menuToggle.setAttribute('aria-label', isOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
   });
   navLinks.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       navLinks.classList.remove('open');
-      menuToggle.textContent = '☰';
       menuToggle.setAttribute('aria-expanded', 'false');
       menuToggle.setAttribute('aria-label', 'Abrir menú de navegación');
     });
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-  // Contact form handler — envía el lead al backend real (Supabase Edge Function)
+  // Contact form handler
   const contactForm = document.getElementById('contactForm');
   const formError = document.getElementById('formError');
   if (contactForm) {
@@ -61,7 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = contactForm.querySelector('button');
       const originalText = btn.textContent;
 
-      if (formError) formError.style.display = 'none';
+      if (formError) {
+        formError.style.display = 'none';
+        formError.textContent = '';
+      }
 
       const formData = new FormData(contactForm);
       const payload = Object.fromEntries(formData.entries());
@@ -110,21 +116,101 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Gallery click to expand (simple lightbox)
-  document.querySelectorAll('.gallery-grid img').forEach(img => {
-    img.addEventListener('click', () => {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:40px;';
-      overlay.addEventListener('click', () => overlay.remove());
+  // Gallery lightbox
+  let currentLightboxIndex = -1;
+  let lightboxImages = [];
+  let lightboxOverlay = null;
 
-      const fullImg = document.createElement('img');
-      fullImg.src = img.src;
-      fullImg.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;';
-      fullImg.alt = img.alt;
+  function openLightbox(index) {
+    lightboxOverlay = document.createElement('div');
+    lightboxOverlay.setAttribute('role', 'dialog');
+    lightboxOverlay.setAttribute('aria-label', 'Galería de imágenes');
+    lightboxOverlay.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;padding:40px;`;
 
-      overlay.appendChild(fullImg);
-      document.body.appendChild(overlay);
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    closeBtn.setAttribute('aria-label', 'Cerrar galería');
+    closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;background:none;border:none;color:white;cursor:pointer;padding:8px;z-index:10;';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+    prevBtn.setAttribute('aria-label', 'Imagen anterior');
+    prevBtn.style.cssText = 'position:absolute;left:20px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.1);border:none;color:white;cursor:pointer;padding:12px;border-radius:50%;z-index:10;';
+
+    const nextBtn = document.createElement('button');
+    nextBtn.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    nextBtn.setAttribute('aria-label', 'Siguiente imagen');
+    nextBtn.style.cssText = 'position:absolute;right:20px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.1);border:none;color:white;cursor:pointer;padding:12px;border-radius:50%;z-index:10;';
+
+    const imgEl = document.createElement('img');
+    imgEl.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:4px;';
+
+    function showImage(i) {
+      if (i < 0 || i >= lightboxImages.length) return;
+      currentLightboxIndex = i;
+      const src = lightboxImages[i];
+      const linkEl = document.querySelector(`.glightbox[href="${CSS.escape(src)}"]`) ||
+                     document.querySelector(`.glightbox img[src*="${CSS.escape(src.split('/').pop())}"]`);
+      imgEl.alt = linkEl?.querySelector('img')?.alt || 'Galería Rapa Nui';
+      imgEl.src = src;
+      prevBtn.style.display = lightboxImages.length > 1 ? '' : 'none';
+      nextBtn.style.display = lightboxImages.length > 1 ? '' : 'none';
+    }
+
+    closeBtn.addEventListener('click', () => closeLightbox());
+    prevBtn.addEventListener('click', () => showImage(currentLightboxIndex - 1));
+    nextBtn.addEventListener('click', () => showImage(currentLightboxIndex + 1));
+    lightboxOverlay.addEventListener('click', (e) => {
+      if (e.target === lightboxOverlay) closeLightbox();
+    });
+
+    lightboxOverlay.appendChild(closeBtn);
+    lightboxOverlay.appendChild(prevBtn);
+    lightboxOverlay.appendChild(nextBtn);
+    lightboxOverlay.appendChild(imgEl);
+    document.body.appendChild(lightboxOverlay);
+    document.addEventListener('keydown', handleLightboxKeydown);
+    showImage(index);
+  }
+
+  function closeLightbox() {
+    if (lightboxOverlay) {
+      lightboxOverlay.remove();
+      lightboxOverlay = null;
+    }
+    document.removeEventListener('keydown', handleLightboxKeydown);
+    currentLightboxIndex = -1;
+  }
+
+  function handleLightboxKeydown(e) {
+    if (e.key === 'Escape') {
+      closeLightbox();
+    } else if (e.key === 'ArrowLeft') {
+      currentLightboxIndex > 0 && openLightbox(currentLightboxIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      currentLightboxIndex < lightboxImages.length - 1 && openLightbox(currentLightboxIndex + 1);
+    }
+  }
+
+  // Collect all gallery images
+  document.querySelectorAll('.glightbox').forEach((link, i) => {
+    const imgSrc = link.getAttribute('href');
+    if (imgSrc) lightboxImages.push(imgSrc);
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const idx = lightboxImages.indexOf(imgSrc);
+      openLightbox(idx);
     });
   });
+
+  // Touch fallback for gallery hover effects
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.tour-card, .cabana-card').forEach(card => {
+      card.addEventListener('touchstart', function () {
+        document.querySelectorAll('.tour-card, .cabana-card').forEach(c => c.classList.remove('touch-hover'));
+        this.classList.add('touch-hover');
+      });
+    });
+  }
 
 });

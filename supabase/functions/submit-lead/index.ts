@@ -128,6 +128,8 @@ Deno.serve(async (req) => {
         `Mensaje: ${message || "-"}`,
       ].join("\n");
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
       await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -141,7 +143,9 @@ Deno.serve(async (req) => {
           subject: `Nuevo lead: ${name} (${eventType || "sin tipo"})`,
           text: emailBody,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
     } catch (e) {
       console.error("resend notify failed", e);
     }

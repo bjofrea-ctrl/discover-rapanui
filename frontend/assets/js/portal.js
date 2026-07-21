@@ -15,13 +15,13 @@ import { supabase } from './supabaseClient.js';
   function showPortal() {
     loginScreen.classList.add('hidden');
     portalContent.classList.add('active');
-    if (logoutBtn) logoutBtn.style.display = 'block';
+    if (logoutBtn) logoutBtn.classList.remove('hidden');
   }
 
   function showLogin() {
     loginScreen.classList.remove('hidden');
     portalContent.classList.remove('active');
-    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.classList.add('hidden');
   }
 
   async function sendMagicLink() {

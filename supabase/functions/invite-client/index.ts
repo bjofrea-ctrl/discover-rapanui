@@ -1,20 +1,3 @@
-// Discover Rapa Nui — Edge Function: invite-client
-// Uso exclusivo del admin (verifica JWT + role=admin de quien llama).
-// Crea (o reutiliza) un cliente + evento, invita al email por Supabase Auth
-// (magic link de "aceptar invitación") y, si viene lead_id, marca el lead como ganado.
-//
-// Deploy: supabase functions deploy invite-client
-// (esta función SÍ verifica JWT — no usar --no-verify-jwt)
-//
-// Body esperado (JSON):
-// {
-//   "email": "pareja@example.com",
-//   "partner1_name": "...", "partner2_name": "...", "phone": "...", "country": "...",
-//   "event_type": "boda_completa", "ceremony_type": "civil", "event_date": "2027-03-10",
-//   "guest_count": 40, "coordinator_name": "...",
-//   "lead_id": "uuid-opcional-del-lead-que-se-convierte"
-// }
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
@@ -51,7 +34,6 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Cliente "como el caller" solo para validar identidad/rol.
   const callerClient = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   });
@@ -96,7 +78,7 @@ Deno.serve(async (req) => {
   const coordinatorName = typeof payload.coordinator_name === "string" ? payload.coordinator_name : null;
   const leadId = typeof payload.lead_id === "string" ? payload.lead_id : null;
 
-  // 1) Upsert de client por email (no duplica si el email ya existe).
+  // 1) Upsert de client por email
   const { data: existingClient } = await admin
     .from("clients")
     .select("id, auth_user_id")
@@ -125,28 +107,46 @@ Deno.serve(async (req) => {
     clientId = newClient.id;
   }
 
-  // 2) Invitar por email si todavía no tiene cuenta de auth vinculada.
+  // 2) Vincular cuenta de auth si no tiene
   if (!clientAuthUserId) {
-    const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: [partner1Name, partner2Name].filter(Boolean).join(" & ") },
-    });
-    if (inviteError) {
-      // Si el usuario de auth ya existía (invitado antes sin quedar linkeado), no es fatal.
-      console.error("invite failed", inviteError);
-    } else if (invited?.user?.id) {
-      clientAuthUserId = invited.user.id;
-      await admin
-        .from("clients")
-        .update({ auth_user_id: clientAuthUserId })
-        .eq("id", clientId);
-      await admin
+    // Primero intentar lookup por email (puede que ya exista en Auth pero no esté linkeado)
+    const { data: users } = await admin.auth.admin.listUsers();
+    const existingAuthUser = users?.users?.find(
+      (u: { email?: string }) => u.email?.toLowerCase() === email
+    );
+
+    if (existingAuthUser) {
+      clientAuthUserId = existingAuthUser.id;
+      await admin.from("clients").update({ auth_user_id: clientAuthUserId }).eq("id", clientId);
+    } else {
+      // No existe en Auth — invitar
+      const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: [partner1Name, partner2Name].filter(Boolean).join(" & ") },
+      });
+
+      if (inviteError) {
+        console.error("invite failed", inviteError);
+        return jsonResponse({ error: "invite_failed", detail: inviteError.message }, 500);
+      }
+
+      if (invited?.user?.id) {
+        clientAuthUserId = invited.user.id;
+        await admin.from("clients").update({ auth_user_id: clientAuthUserId }).eq("id", clientId);
+      }
+    }
+
+    // Actualizar role en profiles — se hace DESPUÉS de setear auth_user_id para evitar race
+    if (clientAuthUserId) {
+      const { error: upsertError } = await admin
         .from("profiles")
-        .update({ role: "client" })
-        .eq("id", clientAuthUserId);
+        .upsert({ id: clientAuthUserId, email, role: "client" }, { onConflict: "id" });
+      if (upsertError) {
+        console.error("profile upsert failed", upsertError);
+      }
     }
   }
 
-  // 3) Crear el evento.
+  // 3) Crear el evento
   const { data: event, error: eventError } = await admin
     .from("events")
     .insert({
@@ -166,10 +166,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "event_insert_failed" }, 500);
   }
 
-  // 4) Clonar plantillas de cronograma/checklist si existen para ese event_type.
+  // 4) Clonar plantillas
   await admin.rpc("clone_templates_to_event", { p_event_id: event.id });
 
-  // 5) Si viene de un lead, marcarlo como ganado y linkearlo al cliente.
+  // 5) Marcar lead como ganado si corresponde
   if (leadId) {
     await admin
       .from("leads")
