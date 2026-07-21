@@ -287,6 +287,29 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 - Nota: los `og:url`/`canonical` apuntan a `https://discoverrapanui.cl` — hay que confirmar que ese sea el dominio final una vez que se configure (hoy el sitio vive en `https://ca726c4a.discover-rapanui.pages.dev`).
 - Queda pendiente, sin tocar todavía: `frontend/assets/images/optimized/` (imágenes avif/webp generadas por `scripts/optimize-images.py` pero no referenciadas en `index.html`) — wirearlas implica reescribir todas las etiquetas `<img>`/`background-image` a `<picture>`/`srcset`, un cambio más grande que merece su propia pasada con verificación visual, no bundleado en esta limpieza.
 
+### Limpieza directa — imágenes optimizadas en Tours/Galería
+
+- ✅ Se agregó `srcset`/`sizes` (tiers xs/sm/md en JPG) a los 14 `<img>` de las secciones Tours y Galería, usando las variantes ya generadas por `scripts/optimize-images.py`. Verificado sin 404s (24 variantes referenciadas) y visualmente con Playwright en desktop y mobile.
+- Se dejaron afuera los fondos `background-image` (hero, about, cabañas) y los formatos `avif`/`webp` — requerirían `<picture>` y tocar CSS, evaluar en pasada aparte.
+
+### Auditoría round 3 (commits `79a41e2`, `99d5e10`, `43b6320` de OpenCode — SEO/a11y, WhatsApp real, email)
+
+- ✅ WhatsApp real (`+56 9 9969 3621`) y email de contacto (`contacto@discoverrapanui.cl`) actualizados correctamente en `index.html`, footer y botón flotante.
+- ✅ CSS/JS de accesibilidad (aria-expanded sincronizado en el menú, focus-visible, `.sr-only`, custom properties) — cambios limpios, sin tocar el diseño aprobado.
+- ✅ `docs/SETUP.md` (movido desde `backend/SETUP.md`) conservó las rutas correctas que ya se habían corregido — el `git mv` no perdió el fix.
+- 🔴 **CRÍTICO, corregido en `47ffe0c`**: `frontend/index.html` (commit `79a41e2`) quedó con un marcador de conflicto de git sin resolver, literal, en el `<head>` (`<<<<<<< HEAD` / `=======`, sin el cierre `>>>>>>>`). Se desplegó exitoso 3 veces seguidas — el sitio público sirvió ese texto roto por un rato. Fix aplicado directamente (no vía OpenCode) por tratarse de un bug ya en producción sin nadie disponible para relevar la instrucción en el momento — confirmado con deploy run #14 en success.
+- ℹ️ Apareció `.opencode/resume.md` (notas de sesión de OpenCode) commiteado — no sensible, pero sugerido agregar `.opencode/` a `.gitignore` en vez de versionarlo.
+
+### Auditoría round 4 (commit `8643368` — secrets de Resend/Cloudflare, dominio agregado)
+
+Contexto: el usuario se ausentó ~3h y pidió trabajo autónomo; a la vuelta relayó un resumen de OpenCode con varias acciones de cuenta (no verificables desde el repo) más 1 commit de código.
+
+- ✅ Único commit nuevo (`8643368`) es solo documentación (`docs/SETUP.md`) reflejando la config real de Resend/Cloudflare — sin secrets reales expuestos (los valores commiteados son públicos/de ejemplo: `onboarding@resend.dev` es el remitente de pruebas de Resend, no una credencial).
+- ✅ Deploy verificado en success (run #15) y confirma la URL estable del proyecto `https://discover-rapanui.pages.dev` (además de la URL con hash por deploy) — coincide con lo reportado.
+- 🟡 **Privacidad, a confirmar con el usuario**: `docs/SETUP.md` ahora tiene el email personal real de una persona (`paola.albornoz.saez@gmail.com`, usado como `NOTIFY_EMAIL_TO` mientras el dominio no está verificado en Resend) commiteado en un **repositorio público**. Es documentación, no una credencial, pero vale confirmar que esa persona esté de acuerdo con que su email quede públicamente visible en GitHub — reemplazar por un placeholder una vez que se verifique el dominio y se pueda volver a `contacto@discoverrapanui.cl` (ítem ya en el checklist de OpenCode).
+- No verificable desde este sandbox (acciones de cuenta, no de repo): `CLOUDFLARE_API_TOKEN` permanente, secrets de Supabase, migraciones 0007/0008 corridas contra la base real, dominio agregado en Cloudflare Pages — se toman como reportadas, pendientes de confirmación visual/funcional cuando se pueda.
+- ⚠️ Sigue sin poder verificarse visualmente el sitio desde este sandbox (bloqueo de red a `*.pages.dev`, ya documentado).
+
 ---
 
 ## Pendientes (dependen del usuario, no de código)
@@ -295,15 +318,17 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 2. ~~Cuenta Resend + configurar secrets de las Edge Functions~~ — hecho por OpenCode.
 3. ~~Completar `frontend/assets/js/config.js` con credenciales reales~~ — hecho por OpenCode, verificado seguro.
 4. ~~Deploy del sitio~~ — hecho por OpenCode, verificado en el log del workflow: https://ca726c4a.discover-rapanui.pages.dev (pendiente que el usuario le eche un ojo visual, este sandbox no tiene acceso de red a `*.pages.dev`).
-5. Confirmar en Supabase Dashboard que `0007`/`0008` (fix de `profiles.role='admin'`) ya corrieron contra la base real.
+5. ~~Confirmar en Supabase Dashboard que `0007`/`0008` ya corrieron~~ — reportado hecho por OpenCode (no verificable desde este sandbox, sin acceso a la DB).
 6. ~~Decidir qué hacer con `frontend-preview/`~~ — resuelto: era código viejo/regresivo, se eliminó; se rescataron las etiquetas SEO seguras.
 7. ~~Consolidar `backend/supabase/` y `supabase/`~~ — resuelto: `supabase/` (raíz) es la única fuente de verdad.
-7b. ~~Wirear `frontend/assets/images/optimized/` en `index.html`~~ — resuelto: se agregó `srcset`/`sizes` (tiers xs/sm/md en JPG) a los 14 `<img>` de las secciones Tours y Galería, verificado sin 404s y con Playwright (desktop + mobile). Se dejaron fuera los fondos `background-image` (hero, about, cabañas) porque migrarlos a `<picture>` requeriría cambios de CSS — evaluar en una pasada aparte si vale la pena. También se dejaron fuera `avif`/`webp` (habría requerido `<picture>` con `<source>` por formato); el srcset actual ya reduce bastante el peso en mobile solo con JPG por tamaño.
-8. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
-9. Confirmar el dominio final (`discoverrapanui.cl` u otro) para actualizar `og:url`/`canonical` en `index.html` una vez esté configurado.
+7b. ~~Wirear `frontend/assets/images/optimized/` en `index.html`~~ — resuelto (ver Limpieza directa arriba).
+8. ~~Número real de WhatsApp Business~~ — resuelto: `+56 9 9969 3621`.
+9. Confirmar el dominio final (`discoverrapanui.cl`, agregado a Cloudflare Pages pero DNS aún pendiente — status `pending`) para actualizar `og:url`/`canonical` en `index.html` una vez esté propagado.
 10. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
-11. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía.
+11. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía (más allá del envío de un lead de prueba).
 12. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
+13. **Nuevo**: confirmar con Paola que está de acuerdo con que su email personal quede público en `docs/SETUP.md` (temporal, hasta verificar dominio en Resend) — ver Auditoría round 4.
+14. **Nuevo, del checklist que dejó OpenCode**: agregar los 2 nameservers de Cloudflare en NIC Chile; crear API Token permanente en Cloudflare (`pages:write`, `email_routing:write`) y actualizarlo en GitHub Secrets; verificar `discoverrapanui.cl` en Resend y volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl`; configurar Email Routing para reenviar `contacto@` a Gmail.
 
 ## Verificación end-to-end (una vez conectado el backend real)
 
