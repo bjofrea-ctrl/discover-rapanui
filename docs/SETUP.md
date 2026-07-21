@@ -81,7 +81,7 @@ En **Project Settings → Edge Functions → Secrets** (o vía CLI: `supabase se
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-NOTIFY_EMAIL_TO=info@discoverrapanui.cl
+NOTIFY_EMAIL_TO=contacto@discoverrapanui.cl
 NOTIFY_EMAIL_FROM=leads@tudominio.cl
 ```
 
