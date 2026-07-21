@@ -81,17 +81,18 @@ En **Project Settings → Edge Functions → Secrets** (o vía CLI: `supabase se
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-NOTIFY_EMAIL_TO=contacto@discoverrapanui.cl
-NOTIFY_EMAIL_FROM=leads@tudominio.cl
+NOTIFY_EMAIL_TO=paola.albornoz.saez@gmail.com
+NOTIFY_EMAIL_FROM=onboarding@resend.dev
 ```
 
 `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los inyecta Supabase automáticamente en toda Edge Function, no hace falta configurarlos.
 
 ## 7. Crear cuenta en Resend (email transaccional)
 
-1. Crear cuenta gratis en [resend.com](https://resend.com) (free tier: 3.000 emails/mes).
-2. Verificar tu dominio (o usar el dominio de pruebas de Resend mientras tanto) para poder usarlo como `NOTIFY_EMAIL_FROM`.
-3. Generar una API key y ponerla en `RESEND_API_KEY` (paso 6).
+1. Crear cuenta gratis en [resend.com](https://resend.com) (free tier: 3.000 emails/mes, solo envía a tu propio email hasta que verifiques un dominio).
+2. Mientras tanto, usa `onboarding@resend.dev` como `NOTIFY_EMAIL_FROM` y tu email registrado como `NOTIFY_EMAIL_TO` — los leads se guardan igual en Supabase aunque el email no llegue.
+3. **Para enviar a @discoverrapanui.cl**: verifica el dominio en Resend (requiere DNS).
+4. Generar una API key y ponerla en `RESEND_API_KEY` (paso 6).
 
 ## 8. Completar la configuración del frontend
 
