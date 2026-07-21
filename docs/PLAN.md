@@ -268,7 +268,16 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 - 🟡 **Tarea 8 (deploy) NO está funcionando**: los 3 workflow runs de "Deploy to Cloudflare Pages" hasta ahora fallaron, incluido el de después del fix. Causa: `Headers.append: "***" is an invalid header value` — típico de un secret `CLOUDFLARE_API_TOKEN` con salto de línea o comillas de más al pegarlo en GitHub. El sitio **todavía no está publicado**. Acción pendiente del usuario/OpenCode: regenerar el secret en GitHub (Settings → Secrets → Actions) pegando el token limpio, sin espacios ni saltos de línea.
 - 🟡 Se detectó un `frontend-preview/` (con mejoras de SEO/Open Graph no presentes en `frontend/`) y un set completo de imágenes optimizadas (avif/webp) en `frontend/assets/images/optimized/` que `index.html` no referencia — trabajo generado pero no conectado al sitio real. Pendiente de decisión: promover a `frontend/` o descartar.
 - 🟡 Se dejó de trackear (`.gitignore` + `git rm --cached`) `frontend/playwright-report/` y `frontend/test-results/`, que habían quedado commiteados por error (varios MB de video/capturas). El propio test suite reportó 6 casos E2E fallando al momento del commit — no se investigaron.
-- ℹ️ Se duplicó `backend/supabase/` en un nuevo `supabase/` en la raíz (contenido de 0001/0002 idéntico, verificado) porque el CLI de Supabase espera esa carpeta ahí. Las migraciones nuevas (0003-0006) solo existen en la copia nueva — `backend/supabase/` quedó desactualizado. Pendiente: elegir una sola fuente de verdad.
+- ℹ️ Se duplicó `backend/supabase/` en un nuevo `supabase/` en la raíz (contenido de 0001/0002 idéntico, verificado) porque el CLI de Supabase espera esa carpeta ahí. Las migraciones nuevas (0003-0008) solo existen en la copia nueva — `backend/supabase/` quedó desactualizado. Pendiente: elegir una sola fuente de verdad.
+
+### Auditoría round 2 (commits `fa2e7a9`, `ffa9013` de OpenCode)
+
+- ✅ **Deploy verificado real**: el workflow run #7 (`ffa9013`) terminó en `success` — confirmado directamente en el log del job ("✨ Deployment complete! Take a peek over at https://ca726c4a.discover-rapanui.pages.dev"), coincide con lo reportado. Los 6 runs anteriores habían fallado. Fix correcto: cambiaron `cloudflare/wrangler-action@v3` (pasaba el token como header HTTP, rechazado por caracter inválido) por `wrangler pages deploy` directo vía variable de entorno (`.github/workflows/deploy.yml`).
+- ✅ **Fix de admin correcto esta vez**: `0008_ensure_admin_profile.sql` escribe en `public.profiles.role` (la tabla que RLS realmente usa), a diferencia del intento anterior. También eliminaron `0006_admin_email.sql` (el que solo tocaba `user_roles`). No pude verificar que la migración ya corrió contra la base real (no tengo acceso a la DB desde acá) — confirmar en Supabase Dashboard.
+- 🟡 Nota menor: quedaron dos migraciones haciendo básicamente lo mismo — mi `0007_fix_admin_profile_role.sql` y su `0008_ensure_admin_profile.sql` (ambas idempotentes, no rompen nada, pero es limpieza pendiente).
+- 🟡 Nota de estilo: borraron `0006_admin_email.sql` del historial en vez de agregar una migración correctiva — funciona, pero rompe la convención de que las migraciones ya aplicadas no se tocan/eliminan.
+- ⚠️ No pude confirmar visualmente que el sitio publicado se ve bien — la política de red de este sandbox bloquea `*.pages.dev` (mismo bloqueo que ya afectó `developers.cloudflare.com` antes). Verificación visual pendiente de un vistazo directo del usuario.
+- Pendientes de rondas anteriores sin cambios: `frontend-preview/`/imágenes optimizadas sin conectar, duplicación `backend/supabase/` vs `supabase/`, número de WhatsApp, upgrade a Supabase Pro.
 
 ---
 
@@ -277,8 +286,8 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 1. ~~Crear proyecto Supabase real y ejecutar las migraciones~~ — hecho por OpenCode.
 2. ~~Cuenta Resend + configurar secrets de las Edge Functions~~ — hecho por OpenCode.
 3. ~~Completar `frontend/assets/js/config.js` con credenciales reales~~ — hecho por OpenCode, verificado seguro.
-4. **Ejecutar la migración `supabase/migrations/0007_fix_admin_profile_role.sql` contra la base real** (Supabase Dashboard → SQL Editor) — sin esto el admin (`contacto@discoverrapanui.cl`) sigue sin poder ver datos en el panel, sin importar qué se haga en `user_roles`.
-5. **Corregir el secret `CLOUDFLARE_API_TOKEN` en GitHub** (Settings → Secrets and variables → Actions) — los 3 deploys hasta ahora fallaron por un header inválido (probablemente el token tiene un salto de línea o comillas de más). El sitio aún no está publicado.
+4. ~~Deploy del sitio~~ — hecho por OpenCode, verificado en el log del workflow: https://ca726c4a.discover-rapanui.pages.dev (pendiente que el usuario le eche un ojo visual, este sandbox no tiene acceso de red a `*.pages.dev`).
+5. Confirmar en Supabase Dashboard que `0007`/`0008` (fix de `profiles.role='admin'`) ya corrieron contra la base real.
 6. Decidir qué hacer con `frontend-preview/` (mejoras SEO/Open Graph no aplicadas) y `frontend/assets/images/optimized/` (imágenes optimizadas no referenciadas) — promoverlas a `frontend/` o descartarlas.
 7. Consolidar `backend/supabase/` y `supabase/` (raíz) en una sola fuente de verdad de migraciones.
 8. Número real de WhatsApp Business (hoy placeholder marcado con `TODO`).
