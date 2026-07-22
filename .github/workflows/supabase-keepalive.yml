@@ -1,0 +1,18 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    # Tue & Fri 15:00 UTC — max gap 3 days well under Supabase's 7-day idle limit
+    - cron: '0 15 * * 2,5'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping PostgREST (read-only query, no session needed)
+        run: |
+          curl -sf -X GET \
+            'https://jpjxpspehsexaenjfwsf.supabase.co/rest/v1/profiles?select=id&limit=1' \
+            -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impwanhwc3BlaHNleGFlbmpmd3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NDM5MDUsImV4cCI6MjEwMDAxOTkwNX0.upy2rW5Ny_ZxV-VFYYd0wShRSizXJlFA_nNrsCPi4z4' \
+            -H 'Accept: application/json'
