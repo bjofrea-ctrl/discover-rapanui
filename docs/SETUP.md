@@ -81,7 +81,7 @@ En **Project Settings → Edge Functions → Secrets** (o vía CLI: `supabase se
 
 ```
 RESEND_API_KEY=re_xxxxxxxx
-NOTIFY_EMAIL_TO=paola.albornoz.saez@gmail.com
+NOTIFY_EMAIL_TO=<email-del-equipo>
 NOTIFY_EMAIL_FROM=onboarding@resend.dev
 ```
 
