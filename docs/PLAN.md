@@ -333,6 +333,16 @@ Contexto: se le pidió a OpenCode correr el checklist de verificación E2E. En c
 4. Recién ahí, correr el checklist E2E original.
 5. Limpiar `.env.example` (placeholders reales, sacar el email de Paola, sacar las variables `VITE_*` que no aplican).
 
+### Auditoría round 6 (commits `af0c91c`, `ea44f89`, `b92a372`, `57123ee`) — los 5 puntos, resueltos correctamente
+
+- ✅ Fuentes: `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display...">` real agregado en `index.html` y `portal.html` (no solo preconnect). Verificado en el HTML.
+- ✅ `gallery8.jpg` sacado limpiamente del grid (7 imágenes, sin referencia rota). Bonus no pedido pero bienvenido: restauraron el `srcset` responsivo que se había perdido en la ronda anterior — mejor que lo que había pedido.
+- ✅ `invite-client`: el upsert de `profiles` ya no manda `email` (columna inexistente) — solo `{ id, role: "client" }`. `listUsers({ perPage: 10000 })` sube el techo de la paginación muy por encima de lo que este negocio va a necesitar en mucho tiempo — no es la solución "perfecta" (lookup server-side por email sería más correcto en teoría) pero es proporcional al tamaño real del problema, no la marco como pendiente.
+- ✅ `.env.example` con placeholders genéricos de verdad (`your-project.supabase.co`, `<your-anon-key>`, `<your-email>`) y sin las variables `VITE_*` que no aplican a este proyecto.
+- ✅ Precios sacados del landing (`plan-price` + `plan-price-note` de ambos planes) y email de Paola reemplazado por `<email-del-equipo>` en `docs/SETUP.md`/`docs/PLAN.md` — pedidos hoy mismo, ejecutados correctamente y sin tocar nada más.
+- ✅ `docs/PLAN.md` actualizado a mano para reflejar la decisión de no subir a Supabase Pro por ahora — edición quirúrgica, no se perdió nada del historial de auditoría previo (rounds 1-5 intactos).
+- Pendiente real que queda: el checklist E2E completo (nunca se corrió con datos reales más allá del envío de un lead de prueba) y el ping de keep-alive de Supabase (specificado, no implementado todavía).
+
 ---
 
 ## Pendientes (dependen del usuario, no de código)
@@ -347,10 +357,13 @@ Contexto: se le pidió a OpenCode correr el checklist de verificación E2E. En c
 7b. ~~Wirear `frontend/assets/images/optimized/` en `index.html`~~ — resuelto (ver Limpieza directa arriba).
 8. ~~Número real de WhatsApp Business~~ — resuelto: `+56 9 9969 3621`.
 9. Confirmar el dominio final (`discoverrapanui.cl`, agregado a Cloudflare Pages pero DNS aún pendiente — status `pending`) para actualizar `og:url`/`canonical` en `index.html` una vez esté propagado.
-10. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía (más allá del envío de un lead de prueba).
-11. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
-12. El email personal en `docs/SETUP.md` ya se reemplazó por `<email-del-equipo>`.
-13. Agregar los 2 nameservers de Cloudflare en NIC Chile; crear API Token permanente en Cloudflare (`pages:write`, `email_routing:write`) y actualizarlo en GitHub Secrets; verificar `discoverrapanui.cl` en Resend y volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl`; configurar Email Routing para reenviar `contacto@` a Gmail.
+10. **Prioridad ahora**: correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real, con los bugs de `invite-client` ya arreglados — no consta que se haya hecho todavía (más allá del envío de un lead de prueba).
+11. **Prioridad ahora**: implementar el ping de keep-alive de Supabase (`.github/workflows/supabase-keepalive.yml`, especificado en el chat del 22 jul — martes/viernes, REST a `profiles`, anon key, falla ruidoso con `curl -f`) — se decidió no subir a Pro por ahora, así que esto es lo que evita la auto-pausa.
+12. **Nuevo, decisión pendiente**: sin Supabase Pro no hay backups automáticos de la base de datos — solo el código está respaldado (GitHub). Si se necesita respaldo real de los datos, hay que armar un export periódico (`pg_dump` vía GitHub Actions) — requiere un secret nuevo y más sensible (la contraseña de la base, no la anon key). Evaluar cuándo se necesite de verdad.
+13. Confirmar el dominio final (`discoverrapanui.cl`, agregado a Cloudflare Pages pero DNS aún pendiente — status `pending`) para actualizar `og:url`/`canonical` en `index.html` una vez esté propagado.
+14. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
+15. Agregar los 2 nameservers de Cloudflare en NIC Chile; crear API Token permanente en Cloudflare (`pages:write`, `email_routing:write`) y actualizarlo en GitHub Secrets; verificar `discoverrapanui.cl` en Resend y volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl`; configurar Email Routing para reenviar `contacto@` a Gmail.
+16. Fase IA/agentes (Fase 3 del plan, Parte B.5/InsForge) — condicionada a tener el ciclo operativo base (10-11) sólido primero. No es hoy.
 
 ## Verificación end-to-end (una vez conectado el backend real)
 
