@@ -777,41 +777,50 @@ async function loadCashFlow() {
   try {
     const { data, error } = await supabase
       .from('finance_transactions')
-      .select('transaction_date, type, amount')
+      .select('transaction_date, type, amount, currency')
       .order('transaction_date', { ascending: true });
     if (error) throw error;
     if (!data || !data.length) { container.innerHTML = '<p class="admin-note">Sin movimientos todavia.</p>'; return; }
 
+    const pfx = function (ccy) { return ccy === 'USD' ? '_usd' : ''; };
     const byMonth = new Map();
     data.forEach(function (t) {
       const key = t.transaction_date.slice(0, 7);
-      if (!byMonth.has(key)) byMonth.set(key, { ingresos: 0, egresos: 0 });
+      const suf = pfx(t.currency);
+      if (!byMonth.has(key)) byMonth.set(key, { ingresos: 0, egresos: 0, ingresos_usd: 0, egresos_usd: 0 });
       const bucket = byMonth.get(key);
-      if (t.type === 'ingreso') bucket.ingresos += Number(t.amount);
-      else bucket.egresos += Number(t.amount);
+      if (t.type === 'ingreso') bucket['ingresos' + suf] += Number(t.amount);
+      else bucket['egresos' + suf] += Number(t.amount);
     });
 
-    let acumulado = 0;
+    let acumCLP = 0, acumUSD = 0;
     const rows = [...byMonth.keys()].sort().map(function (key) {
-      const { ingresos, egresos } = byMonth.get(key);
-      const saldoMes = ingresos - egresos;
-      acumulado += saldoMes;
+      const b = byMonth.get(key);
+      const saldoCLP = b.ingresos - b.egresos;
+      const saldoUSD = b.ingresos_usd - b.egresos_usd;
+      acumCLP += saldoCLP;
+      acumUSD += saldoUSD;
       const [year, month] = key.split('-');
       const label = MONTH_NAMES_ES[Number(month) - 1] + ' ' + year;
-      return { label: label, ingresos: ingresos, egresos: egresos, saldoMes: saldoMes, acumulado: acumulado };
+      return { label: label, ingresos: b.ingresos, egresos: b.egresos, saldoCLP: saldoCLP, acumCLP: acumCLP,
+        ingresos_usd: b.ingresos_usd, egresos_usd: b.egresos_usd, saldoUSD: saldoUSD, acumUSD: acumUSD };
     });
 
     container.innerHTML =
-      '<table class="admin-table">' +
-      '<thead><tr><th>Mes</th><th>Ingresos</th><th>Egresos</th><th>Saldo del mes</th><th>Saldo acumulado</th></tr></thead>' +
+      '<div style="overflow-x:auto"><table class="admin-table">' +
+      '<thead><tr><th>Mes</th><th>Ingresos CLP</th><th>USD</th><th>Egresos CLP</th><th>USD</th><th>Saldo CLP</th><th>USD</th><th>Acumulado CLP</th><th>USD</th></tr></thead>' +
       '<tbody>' + rows.map(function (r) {
         return '<tr>' +
           '<td>' + r.label + '</td>' +
           '<td>' + formatMoney(r.ingresos, 'CLP') + '</td>' +
+          '<td>' + formatMoney(r.ingresos_usd, 'USD') + '</td>' +
           '<td>' + formatMoney(r.egresos, 'CLP') + '</td>' +
-          '<td>' + formatMoney(r.saldoMes, 'CLP') + '</td>' +
-          '<td>' + formatMoney(r.acumulado, 'CLP') + '</td></tr>';
-      }).join('') + '</tbody></table>';
+          '<td>' + formatMoney(r.egresos_usd, 'USD') + '</td>' +
+          '<td>' + formatMoney(r.saldoCLP, 'CLP') + '</td>' +
+          '<td>' + formatMoney(r.saldoUSD, 'USD') + '</td>' +
+          '<td>' + formatMoney(r.acumCLP, 'CLP') + '</td>' +
+          '<td>' + formatMoney(r.acumUSD, 'USD') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
   } catch (err) {
     container.innerHTML = '<p class="admin-note">Error cargando flujo de caja.</p>';
     showToast('Error cargando flujo de caja.', 'error');
@@ -831,40 +840,43 @@ async function loadEerr() {
     const toDate = new Date(toYear, toMonth, 0).toISOString().slice(0, 10);
     const { data, error } = await supabase
       .from('finance_transactions')
-      .select('type, category, amount')
+      .select('type, category, amount, currency')
       .gte('transaction_date', fromDate)
       .lte('transaction_date', toDate);
     if (error) throw error;
     if (!data || !data.length) { container.innerHTML = '<p class="admin-note">Sin movimientos en ese rango.</p>'; return; }
 
     const byCategory = new Map();
-    let totalIngresos = 0;
-    let totalEgresos = 0;
+    let totalCLP = 0, totalUSD = 0, egresosCLP = 0, egresosUSD = 0;
     data.forEach(function (t) {
-      if (!byCategory.has(t.category)) byCategory.set(t.category, { ingresos: 0, egresos: 0 });
-      const bucket = byCategory.get(t.category);
-      if (t.type === 'ingreso') { bucket.ingresos += Number(t.amount); totalIngresos += Number(t.amount); }
-      else { bucket.egresos += Number(t.amount); totalEgresos += Number(t.amount); }
+      const key = t.category + '|' + (t.currency || 'CLP');
+      if (!byCategory.has(key)) byCategory.set(key, { category: t.category, currency: t.currency || 'CLP', ingresos: 0, egresos: 0 });
+      const bucket = byCategory.get(key);
+      if (t.type === 'ingreso') { bucket.ingresos += Number(t.amount); if ((t.currency || 'CLP') === 'USD') totalUSD += Number(t.amount); else totalCLP += Number(t.amount); }
+      else { bucket.egresos += Number(t.amount); if ((t.currency || 'CLP') === 'USD') egresosUSD += Number(t.amount); else egresosCLP += Number(t.amount); }
     });
 
-    const rows = [...byCategory.entries()].map(function (entry) {
-      const category = entry[0];
-      const v = entry[1];
+    const rows = [...byCategory.values()].map(function (v) {
       return '<tr>' +
-        '<td>' + escapeHtml(category) + '</td>' +
-        '<td>' + formatMoney(v.ingresos, 'CLP') + '</td>' +
-        '<td>' + formatMoney(v.egresos, 'CLP') + '</td></tr>';
+        '<td>' + escapeHtml(v.category) + '</td>' +
+        '<td>' + formatMoney(v.ingresos, v.currency) + '</td>' +
+        '<td>' + formatMoney(v.egresos, v.currency) + '</td></tr>';
     }).join('');
 
     container.innerHTML =
-      '<table class="admin-table">' +
+      '<div style="overflow-x:auto"><table class="admin-table">' +
       '<thead><tr><th>Categoria</th><th>Ingresos</th><th>Egresos</th></tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
-      '<tfoot><tr><td><strong>Total</strong></td>' +
-      '<td><strong>' + formatMoney(totalIngresos, 'CLP') + '</strong></td>' +
-      '<td><strong>' + formatMoney(totalEgresos, 'CLP') + '</strong></td></tr>' +
-      '<tr><td colspan="2"><strong>Resultado del periodo</strong></td>' +
-      '<td><strong>' + formatMoney(totalIngresos - totalEgresos, 'CLP') + '</strong></td></tr></tfoot></table>';
+      '<tfoot><tr><td><strong>Total CLP</strong></td>' +
+      '<td><strong>' + formatMoney(totalCLP, 'CLP') + '</strong></td>' +
+      '<td><strong>' + formatMoney(egresosCLP, 'CLP') + '</strong></td></tr>' +
+      '<tr><td><strong>Total USD</strong></td>' +
+      '<td><strong>' + formatMoney(totalUSD, 'USD') + '</strong></td>' +
+      '<td><strong>' + formatMoney(egresosUSD, 'USD') + '</strong></td></tr>' +
+      '<tr><td><strong>Resultado CLP</strong></td>' +
+      '<td colspan="2"><strong>' + formatMoney(totalCLP - egresosCLP, 'CLP') + '</strong></td></tr>' +
+      '<tr><td><strong>Resultado USD</strong></td>' +
+      '<td colspan="2"><strong>' + formatMoney(totalUSD - egresosUSD, 'USD') + '</strong></td></tr></tfoot></table></div>';
   } catch (err) {
     container.innerHTML = '<p class="admin-note">Error cargando EERR.</p>';
     showToast('Error cargando EERR.', 'error');
@@ -900,25 +912,28 @@ document.getElementById('excelFileInput').addEventListener('change', async funct
           category: r[2],
           description: r[3] || '',
           amount: Number(r[4]),
+          currency: String(r[5] || '').trim().toUpperCase() === 'USD' ? 'USD' : 'CLP',
         };
-      })
-      .filter(function (r) { return (r.type === 'ingreso' || r.type === 'egreso') && r.transaction_date && !Number.isNaN(r.amount); });
+      });
 
-    if (!parsed.length) {
+    const validos = parsed.filter(function (r) { return (r.type === 'ingreso' || r.type === 'egreso') && r.transaction_date && !Number.isNaN(r.amount); });
+    const descartados = parsed.length - validos.length;
+
+    if (!validos.length) {
       preview.innerHTML = '<p class="admin-note">No se encontraron filas validas. Revisa el formato de columnas.</p>';
       pendingImportRows = null;
       return;
     }
 
-    pendingImportRows = { rows: parsed, file: file };
+    pendingImportRows = { rows: validos, file: file };
     preview.innerHTML =
-      '<p class="admin-note">' + parsed.length + ' filas detectadas. Revisa antes de confirmar:</p>' +
+      '<p class="admin-note">' + validos.length + ' filas detectadas' + (descartados > 0 ? ' (' + descartados + ' descartadas por formato invalido).' : '.') + ' Revisa antes de confirmar:</p>' +
       '<table class="admin-table">' +
-      '<thead><tr><th>Fecha</th><th>Tipo</th><th>Categoria</th><th>Descripcion</th><th>Monto</th></tr></thead>' +
-      '<tbody>' + parsed.slice(0, 50).map(function (r) {
-        return '<tr><td>' + escapeHtml(r.transaction_date) + '</td><td>' + escapeHtml(r.type) + '</td><td>' + escapeHtml(r.category) + '</td><td>' + escapeHtml(r.description) + '</td><td>' + r.amount + '</td></tr>';
+      '<thead><tr><th>Fecha</th><th>Tipo</th><th>Categoria</th><th>Descripcion</th><th>Monto</th><th>Moneda</th></tr></thead>' +
+      '<tbody>' + validos.slice(0, 50).map(function (r) {
+        return '<tr><td>' + escapeHtml(r.transaction_date) + '</td><td>' + escapeHtml(r.type) + '</td><td>' + escapeHtml(r.category) + '</td><td>' + escapeHtml(r.description) + '</td><td>' + r.amount + '</td><td>' + r.currency + '</td></tr>';
       }).join('') + '</tbody></table>' +
-      (parsed.length > 50 ? '<p class="admin-note">Mostrando 50 de ' + parsed.length + '.</p>' : '') +
+      (validos.length > 50 ? '<p class="admin-note">Mostrando 50 de ' + validos.length + '.</p>' : '') +
       '<button id="confirmImportBtn" class="admin-btn primary">Confirmar importacion</button> ' +
       '<button id="cancelImportBtn" class="admin-btn">Cancelar</button>' +
       '<p id="importMsg" class="admin-note"></p>';
@@ -960,7 +975,7 @@ async function confirmImport() {
           category: r.category || 'otro',
           description: r.description || null,
           amount: r.amount,
-          currency: 'CLP',
+          currency: r.currency || 'CLP',
           source: 'excel_import',
           import_batch_id: batchId,
           created_by: session.user.id,

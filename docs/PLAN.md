@@ -374,3 +374,32 @@ Contexto: se le pidió a OpenCode correr el checklist de verificación E2E. En c
 - Aislamiento RLS entre dos clientes de prueba.
 - Presupuesto vs. servicios calcula bien; Excel de contabilidad importa correctamente.
 - Cuenta `role='client'` no puede ver leads, eventos de otros clientes, ni la sección de Contabilidad.
+
+## Backlog — Dashboard Admin (`frontend/admin/`)
+
+Priorizado por la auditoría del 22-jul-2026. Los fix críticos (moneda y contador Excel) ya están implementados; el resto queda documentado para cuando el volumen del negocio lo justifique.
+
+### CRÍTICO (corregido)
+- ~~Bug moneda en `loadCashFlow`/`loadEerr`: sumaba CLP+USD como iguales, hardcodeaba 'CLP'. Fix: `currency` en select, agrupa por moneda, columnas separadas.~~
+- ~~Bug moneda en `confirmImport`: insertaba todo como 'CLP'. Fix: columna `currency` en Excel parser y en el insert.~~
+- ~~Excel import: filas inválidas descartadas en silencio. Fix: contador "N válidas, M descartadas".~~
+
+### ALTO (pendiente — backlog calidad)
+- **Notificaciones de leads nuevos**: agregar Realtime subscription (`supabase.channel('leads')`) para toast instantáneo al admin sin recargar.
+- **Editar campos de lead** (no solo cambiar status): nombre, teléfono, país — hoy toca DB directo.
+- **Editar servicios, milestones, vendors**: hoy solo crear y eliminar. Si cambia un precio o fecha, hay que eliminar y recrear.
+- **Cash flow sin paginación**: trae todas las transacciones, no escala a 500+ filas.
+- **`order_index` duplicado al eliminar ítems**: `COUNT` devuelve índices no contiguos; al insertar se choca con valores existentes. Cosmético, orden no determinista.
+
+### MEDIO (pendiente — backlog calidad)
+- **Event delegation** en vez de 30+ listeners por render (cada loader recrea listeners desde cero).
+- **`Promise.all` vs `allSettled`** en carga inicial: una query que falle tumba todo el dashboard.
+- **EERR exportable a CSV** (para el contador).
+- **CSS inline → `admin.css`**: ~47 líneas de reglas admin en `<style>` HTML, ya justifica su propio archivo.
+- **Silent failure en milestone status update** (línea 450-457): el `<select>` cambia visualmente pero el update a DB no tiene try/catch.
+
+### BAJO (pendiente — backlog calidad)
+- Confirm dialog en delete de transacciones (falta solo ahí, los demás ya tienen `confirm()`).
+- JWT refresh interval sin try/catch exterior.
+- Separar `admin.js` (~1260 líneas) en módulos (`leads.js`, `events.js`, `accounting.js`, `templates.js`).
+- KPI cards overhead (oportunidad UX: métricas en lugar de tablas vacías al entrar).
