@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
   // 2) Vincular cuenta de auth si no tiene
   if (!clientAuthUserId) {
     // Primero intentar lookup por email (puede que ya exista en Auth pero no esté linkeado)
-    const { data: users } = await admin.auth.admin.listUsers();
+    const { data: users } = await admin.auth.admin.listUsers({ perPage: 10000 });
     const existingAuthUser = users?.users?.find(
       (u: { email?: string }) => u.email?.toLowerCase() === email
     );
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     if (clientAuthUserId) {
       const { error: upsertError } = await admin
         .from("profiles")
-        .upsert({ id: clientAuthUserId, email, role: "client" }, { onConflict: "id" });
+        .upsert({ id: clientAuthUserId, role: "client" }, { onConflict: "id" });
       if (upsertError) {
         console.error("profile upsert failed", upsertError);
       }
