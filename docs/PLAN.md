@@ -108,7 +108,7 @@ Por qué **Supabase** y no Firebase/Pocketbase/Appwrite/InsForge:
 - 100% gestionado, sin servidores ni backups que mantener a mano.
 - Madurez y ecosistema muy superiores a alternativas más nuevas evaluadas (ej. InsForge, un BaaS "agent-native" interesante para una capa de IA a futuro, pero no para reemplazar el core transaccional ya construido — ver nota de evaluación más abajo).
 
-⚠️ **Advertencia operativa**: en el plan gratis, un proyecto Supabase se **pausa tras 7 días de inactividad**. Antes de dar acceso a clientes reales hay que subir a **Supabase Pro (US$25/mes)**.
+ℹ️ **Nota**: en el plan gratis, un proyecto Supabase se pausa tras 7 días de inactividad. Por ahora no es problema — se evaluará subir a Pro cuando haya clientes reales.
 
 ### B.3 Modelo de datos (Postgres, RLS en todas las tablas)
 
@@ -157,13 +157,13 @@ Edge Function `submit-lead`: valida campos server-side, honeypot anti-spam, inse
 
 ### B.7 Costo mensual estimado (USD)
 
-| Ítem | Desarrollo/pruebas | Producción con clientes reales |
-|---|---|---|
-| Supabase | $0 (Free) | **$25/mes (Pro)** |
+| Ítem | Desarrollo/pruebas | Producción |
+|---|---|---|---|
+| Supabase | $0 (Free) | $0 (Free, suficiente por ahora) |
 | Resend | $0 | $0 |
 | Hosting (Cloudflare Pages/Netlify) | $0 | $0 |
 | Dominio | ~$1/mes | ~$1/mes |
-| **Total** | **~$0-1/mes** | **~$26-30/mes** |
+| **Total** | **~$0-1/mes** | **~$0-1/mes** |
 
 Costos futuros opcionales: WhatsApp Business API, Stripe.
 
@@ -253,8 +253,7 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 | 6 | Completar `frontend/assets/js/config.js` con credenciales reales (nunca la `service_role key`) | Sitio local sin warning de consola |
 | 7 | Probar el flujo completo siguiendo el checklist de "Verificación end-to-end" (abajo) | Cada ítem pasa |
 | 8 | Deploy del sitio a Cloudflare Pages o Netlify | URL pública funcionando |
-| 9 | Upgrade a Supabase Pro antes del primer cliente real | Sin auto-pausa a 7 días |
-| 10 | Reemplazar el placeholder del número de WhatsApp Business | Botón abre chat real |
+| 9 | Reemplazar el placeholder del número de WhatsApp Business | Botón abre chat real |
 
 **Restricciones para OpenCode**: no tocar `style.css` ni la estructura HTML existente; nunca commitear la `service_role key` ni secrets en el repo; no reescribir `0001`/`0002` (migración nueva `0003_...` si hace falta un cambio); no adelantar la Fase 3 de IA/InsForge.
 
@@ -277,7 +276,7 @@ Todo lo que dependía de código ya está construido y mergeado a `main` (schema
 - 🟡 Nota menor: quedaron dos migraciones haciendo básicamente lo mismo — mi `0007_fix_admin_profile_role.sql` y su `0008_ensure_admin_profile.sql` (ambas idempotentes, no rompen nada, pero es limpieza pendiente).
 - 🟡 Nota de estilo: borraron `0006_admin_email.sql` del historial en vez de agregar una migración correctiva — funciona, pero rompe la convención de que las migraciones ya aplicadas no se tocan/eliminan.
 - ⚠️ No pude confirmar visualmente que el sitio publicado se ve bien — la política de red de este sandbox bloquea `*.pages.dev` (mismo bloqueo que ya afectó `developers.cloudflare.com` antes). Verificación visual pendiente de un vistazo directo del usuario.
-- Pendientes de rondas anteriores sin cambios: `frontend-preview/`/imágenes optimizadas sin conectar, duplicación `backend/supabase/` vs `supabase/`, número de WhatsApp, upgrade a Supabase Pro.
+- Pendientes de rondas anteriores sin cambios: `frontend-preview/`/imágenes optimizadas sin conectar, duplicación `backend/supabase/` vs `supabase/`, número de WhatsApp.
 
 ### Limpieza directa (Claude Code, sin pasar por OpenCode — cambios de código puro, sin cuentas/credenciales de por medio)
 
@@ -348,11 +347,10 @@ Contexto: se le pidió a OpenCode correr el checklist de verificación E2E. En c
 7b. ~~Wirear `frontend/assets/images/optimized/` en `index.html`~~ — resuelto (ver Limpieza directa arriba).
 8. ~~Número real de WhatsApp Business~~ — resuelto: `+56 9 9969 3621`.
 9. Confirmar el dominio final (`discoverrapanui.cl`, agregado a Cloudflare Pages pero DNS aún pendiente — status `pending`) para actualizar `og:url`/`canonical` en `index.html` una vez esté propagado.
-10. Subir a Supabase Pro (US$25/mes) antes de invitar al primer cliente real.
-11. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía (más allá del envío de un lead de prueba).
-12. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
-13. **Nuevo**: confirmar con Paola que está de acuerdo con que su email personal quede público en `docs/SETUP.md` (temporal, hasta verificar dominio en Resend) — ver Auditoría round 4.
-14. **Nuevo, del checklist que dejó OpenCode**: agregar los 2 nameservers de Cloudflare en NIC Chile; crear API Token permanente en Cloudflare (`pages:write`, `email_routing:write`) y actualizarlo en GitHub Secrets; verificar `discoverrapanui.cl` en Resend y volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl`; configurar Email Routing para reenviar `contacto@` a Gmail.
+10. Correr el checklist completo de "Verificación end-to-end" (abajo) contra el backend real — no consta que se haya hecho todavía (más allá del envío de un lead de prueba).
+11. Decisiones de negocio no técnicas: programa de referidos, contenido SEO bilingüe, alianza formal con Ma'u Henua.
+12. El email personal en `docs/SETUP.md` ya se reemplazó por `<email-del-equipo>`.
+13. Agregar los 2 nameservers de Cloudflare en NIC Chile; crear API Token permanente en Cloudflare (`pages:write`, `email_routing:write`) y actualizarlo en GitHub Secrets; verificar `discoverrapanui.cl` en Resend y volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl`; configurar Email Routing para reenviar `contacto@` a Gmail.
 
 ## Verificación end-to-end (una vez conectado el backend real)
 

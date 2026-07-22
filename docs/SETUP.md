@@ -118,9 +118,7 @@ El sitio sigue siendo HTML/CSS/JS puro (`frontend/`), sin build step. Cualquiera
 
 Después del primer deploy, vuelve al paso 3 y agrega la URL real de producción a los Redirect URLs de Supabase Auth.
 
-## 10. Subir a Supabase Pro antes de dar acceso a clientes reales
-
-⚠️ En el plan gratis, el proyecto Supabase **se pausa tras 7 días sin actividad**. Bien para desarrollo, pero antes de invitar al primer cliente real, sube a **Pro (US$25/mes)** en Project Settings → Billing, para que el portal no quede inaccesible.
+(La pausa por inactividad tras 7d en el plan gratis no es problema por ahora — se evaluará subir a Pro cuando haya clientes reales.)
 
 ---
 
