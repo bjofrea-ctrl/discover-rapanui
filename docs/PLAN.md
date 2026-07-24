@@ -19,6 +19,44 @@ Decisiones ya validadas con el usuario:
 
 ---
 
+## Hoja de Ruta — Cierre y Puesta en Marcha (22-jul-2026)
+
+> **Léase primero.** Esta sección manda sobre cualquier prioridad anterior del documento — es la que está vigente hoy. Contexto: hay un evento real confirmado este mes; el objetivo es que Boris pueda empezar a meter datos reales en el sistema cuanto antes, sin bloquearse en pulido que no hace falta todavía. División de trabajo: Claude Code define y audita cada fase, OpenCode implementa lo técnico, Boris resuelve lo que depende de sus cuentas/decisiones.
+
+### Fase 0 — Desbloquear HOY (nada de código nuevo, se hace ya)
+
+1. **Boris/OpenCode**: insertar a mano el lead del evento de este mes en la tabla `leads` de Supabase (Table Editor), con los datos reales que ya se tienen. Habilita el botón "Convertir en cliente" sin esperar la Fase 1.
+2. **Boris**: hacer el login manual de prueba con magic link (`test-e2e@discoverrapanui.cl` en `https://discover-rapanui.pages.dev/portal.html`, botón "Enviar enlace de acceso") — es la única parte del flujo end-to-end que nunca se probó con un click real en un email real. Hacerlo antes de invitar al cliente real, no después.
+
+### Fase 1 — Cierra el único gap de código que bloquea (OpenCode, esta semana)
+
+3. **Botón "+ Nuevo Cliente" sin lead previo**: hoy el único camino para crear un cliente es "Convertir en cliente" colgado de un lead existente. El backend (`invite-client`) ya soporta `lead_id` opcional — falta el botón en `frontend/admin/index.html`/`admin.js` que abra el mismo formulario con un lead vacío (sin depender del workaround manual de la Fase 0 para el próximo cliente).
+
+Con la Fase 0 y la Fase 1 completas, **Boris ya puede operar el sistema con datos reales de punta a punta** — el resto de abajo es mejora de calidad, no bloqueante.
+
+### Fase 2 — Reducir la operación manual (OpenCode, sin apuro, en este orden)
+
+Prioridad ya acordada — atacan directamente el cuello de botella real identificado ("la operación manual consume tiempo"), no el de captación de leads (eso es Fase 4, y es de Boris, no de código):
+
+4. Notificaciones realtime de leads (verificar primero que `ALTER PUBLICATION supabase_realtime ADD TABLE leads` esté aplicado).
+5. Edición inline de lead (nombre/teléfono/país) y de servicios/milestones/vendors (hoy solo crear/eliminar).
+6. Fix silent failure en update de milestone status (falta try/catch) + fix de `order_index` duplicado al eliminar ítems.
+7. KPI cards en el dashboard (leads del mes, conversión, valor de pipeline, eventos activos).
+8. Export CSV del EERR.
+
+### Fase 3 — Cuentas e infraestructura (Boris, en paralelo, no bloquea nada de lo anterior)
+
+9. Nameservers de `discoverrapanui.cl` en NIC Chile (dominio ya agregado a Cloudflare Pages, DNS pendiente).
+10. Token permanente de Cloudflare (`pages:write`, `email_routing:write`) en GitHub Secrets.
+11. Verificar dominio en Resend → volver `NOTIFY_EMAIL_FROM`/`NOTIFY_EMAIL_TO` a `contacto@discoverrapanui.cl` → configurar Email Routing.
+12. Decisión pendiente: estrategia de backup real de la base de datos (sin Supabase Pro no hay backup automático — solo el código está respaldado en GitHub).
+
+### Fase 4 — Captación de leads (Boris, distinto de todo lo anterior)
+
+No es un problema que el dashboard resuelva. Ya mapeado en la Parte A de este plan: reposicionar Instagram con el tooling existente en `analisis/`, SEO bilingüe, programa de referidos. Se puede trabajar en paralelo a todo lo de arriba, pero es otro tipo de trabajo (contenido/negocio, no tickets de código).
+
+---
+
 ## Parte A — Plan de Negocio y Crecimiento
 
 ### A.1 Diagnóstico de mercado (investigación 2026)
