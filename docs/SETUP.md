@@ -31,7 +31,7 @@ los dashboards web.
 
 ### Formato del Excel para importar movimientos contables
 
-La sección "Contabilidad" del panel admin importa archivos `.xlsx`/`.xls` con **5 columnas, en este orden, sin encabezado obligatorio** (si hay una fila de encabezado, se descarta sola porque no calza con "ingreso"/"egreso"):
+La sección "Contabilidad" del panel admin importa archivos `.xlsx`/`.xls` con **6 columnas, en este orden, sin encabezado obligatorio** (si hay una fila de encabezado, se descarta sola porque no calza con "ingreso"/"egreso"):
 
 | Columna | Contenido | Ejemplo |
 |---|---|---|
@@ -40,8 +40,9 @@ La sección "Contabilidad" del panel admin importa archivos `.xlsx`/`.xls` con *
 | C | Categoría (texto libre, ej. `venta_evento`, `arriendo`, `sueldos`, `marketing`, `proveedores`) | `venta_evento` |
 | D | Descripción | `Seña boda María & Pablo` |
 | E | Monto (número, sin símbolo de moneda) | `1500000` |
+| F | Moneda (`CLP` o `USD`; vacío o cualquier otro valor → CLP por defecto) | `CLP` |
 
-Todas las filas se importan en pesos chilenos (CLP). El admin ve una vista previa antes de confirmar, y el archivo original queda guardado en el bucket `finance-imports` para trazabilidad — se puede identificar y deshacer un import completo por su `import_batch_id` en la tabla `finance_transactions`.
+El admin ve una vista previa con todas las columnas antes de confirmar, y el archivo original queda guardado en el bucket `finance-imports` para trazabilidad — se puede identificar y deshacer un import completo por su `import_batch_id` en la tabla `finance_transactions`. Los totales se agrupan por moneda en el flujo de caja y el EERR; CLP y USD nunca se mezclan.
 
 ## 3. Configurar Auth (magic link, sin registro público)
 
@@ -133,6 +134,6 @@ Después del primer deploy, vuelve al paso 3 y agrega la URL real de producción
 - [ ] Crear una segunda cuenta de cliente de prueba y confirmar que **no** ve los datos del primer cliente (aislamiento por RLS).
 - [ ] En el editor del evento, guardar un presupuesto y agregar 2-3 servicios (ceremonia, tour, cena, etc.) → confirmar que el resumen "% del presupuesto" se calcula bien y que el cliente los ve en "Qué Incluye tu Experiencia" en `portal.html`.
 - [ ] En "Contabilidad", agregar un movimiento manual y confirmar que aparece en Flujo de Caja y en el listado.
-- [ ] Subir un Excel de prueba con el formato de 5 columnas documentado arriba → revisar la vista previa, confirmar, y verificar que las filas quedan en `finance_transactions` y el archivo en el bucket `finance-imports`.
+- [ ] Subir un Excel de prueba con el formato de 6 columnas documentado arriba (incluir filas CLP y USD) → revisar la vista previa y el contador de filas descartadas, confirmar, y verificar que las filas quedan en `finance_transactions` con la moneda correcta y el archivo en el bucket `finance-imports`.
 - [ ] Seleccionar un rango de meses en EERR y confirmar que los totales por categoría cuadran con lo cargado.
 - [ ] Con la cuenta de cliente de prueba (no admin), confirmar que no puede acceder a ninguna sección de Contabilidad (ni siquiera ve el panel admin, por el guard de `role`).

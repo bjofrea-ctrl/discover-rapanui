@@ -5,3 +5,5 @@ node_modules/
 __pycache__/
 frontend/playwright-report/
 frontend/test-results/
+.claude/
+docs/AGENT_MEMORY.md
